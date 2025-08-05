@@ -37,7 +37,7 @@ initialize() {
     // initializeGenomicElementType("g4", c(m1,m2), c(9,1)); 
 
     initializeGenomicElementType("g1", c(m1,m2), c(9,1)); //10% of mutations are deleterious (m2), 90% are neutral (m1)
-    initializeGenomicElement(g1, 0, L - 1);   // uniform chromosome of length d_chr in bases
+    initializeGenomicElement(g1, 0, d_chr - 1);   // uniform chromosome of length d_chr in bases
 
     // initializeGenomicElement(g2, asInteger(d_chr/2)-27500, asInteger(d_chr/2)-27500 + 200);
     // for (elem in 0:49) {
