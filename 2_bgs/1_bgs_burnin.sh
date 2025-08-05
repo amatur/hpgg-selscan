@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=2_1_bgs_burnin        # Job name
-#SBATCH --output=../2_bgs/%x.out        # Output file (%j will be replaced with the job ID)
-#SBATCH --error=../2_bgs/%x.err          # Error file (%j will be replaced with the job ID)
+#SBATCH --job-name=1_bgs_burnin        # Job name
+#SBATCH --output=%x.out        # Output file (%j will be replaced with the job ID)
+#SBATCH --error=%x.err          # Error file (%j will be replaced with the job ID)
 #SBATCH --ntasks=1                    # Number of tasks (processes)
 #SBATCH --cpus-per-task=1            # Number of CPU cores per task
 #SBATCH --mem=8G                      # Memory per node (10GB in this case)
@@ -18,7 +18,6 @@ source $(conda info --base)/etc/profile.d/conda.sh
 conda activate test-slim
 
 echo "Starting job at $(date)"  # Print the current date
-cd ../2_bgs
 mkdir -p ../output/2_1_bgs_burnin
 slim 1_bgs_burnin.slim
 echo "Ending job at $(date)" 

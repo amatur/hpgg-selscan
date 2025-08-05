@@ -3,62 +3,35 @@
 // use the "burnin.trees" output for analysis, 10N burn-in
 
 initialize() {
+    initializeSLiMOptions(keepPedigrees=T);
     initializeTreeSeq();
-    // Directly define constants with fixed values
+
+    defineConstant("outputPathPrefix", "../output/2_1_bgs_burnin/");
     defineConstant("d_sel", 0.1);
-    defineConstant("d_mloc", 5000000); // 5 Mb
-    defineConstant("d_chr", 10000000); // 10 Mb
+    defineConstant("d_chr", 1000); // 10 Mb 10000000
     defineConstant("d_rr", 1e-8);
     defineConstant("d_mr", 1.29e-8); // mutation rate per base per generation
-    defineConstant("d_hapsel", 1);
-    defineConstant("outputPathPrefix", "../output/2_3_bgs_sweep/");
-    defineConstant("sampleTimes", c(100, 200, 300, 400, 500, 1000, 2000));
     defineConstant("d_ne", 10000); 
-    defineConstant("DRIFT_GEN", 0); // Generation after which we check if sweep survived drift
-    defineConstant("MAX_GEN", 2000); // Maximum generation to run the simulation
-    defineConstant("MUT_GEN", 1); // Generation when beneficial mutation introduced 1
-    defineConstant("SURVIVAL_CHECK_GEN", MUT_GEN + DRIFT_GEN); // Generation to check if sweep survived early drift
     defineConstant("BURN_IN", 100000); // burn in 10*Ne
 
     initializeMutationRate(d_mr);     // uniform mutation rate of d_mr
     
     // -- NEUTRAL + BACKGROUND SELECTION PARAMETERS --
-    // m1 mutation type: neutral
-    // m2 mutation type: recessive negative selection with gamma distribution of mean 0.1 and shape 0.2
-    initializeMutationType("m1", 0.5, "f", 0.0);
-    initializeMutationType("m2", 0.1, "g", -d_sel, 0.2);
+    initializeMutationType("m1", 0.5, "f", 0.0);             // m1 mutation type: neutral
+    initializeMutationType("m2", 0.1, "g", -d_sel, 0.2);     // m2 mutation type: recessive negative selection with gamma distribution of mean 0.1 and shape 0.2
 
-    // g1 genomic element type: uses m1 for all mutations
-    // g2 genome element type is a UTR, 50% of mutations are deleterious
-    // g3 genome element type is an exon, 75% of mutations are deleterious
-    // g4 genome element type is an intron, 10% of mutations are deleterious
-    // initializeGenomicElementType("g1", m1, 1.0);
-    // initializeGenomicElementType("g2", c(m1,m2), c(1,1));
-    // initializeGenomicElementType("g3", c(m1,m2), c(1,3));
-    // initializeGenomicElementType("g4", c(m1,m2), c(9,1)); 
-
+    // g1 genome element type is an intron, 10% of mutations are deleterious
     initializeGenomicElementType("g1", c(m1,m2), c(9,1)); //10% of mutations are deleterious (m2), 90% are neutral (m1)
     initializeGenomicElement(g1, 0, d_chr - 1);   // uniform chromosome of length d_chr in bases
 
-    // initializeGenomicElement(g2, asInteger(d_chr/2)-27500, asInteger(d_chr/2)-27500 + 200);
-    // for (elem in 0:49) {
-    //   initializeGenomicElement(g3, asInteger(d_chr/2)-27500 + 201 + (elem * 1100), asInteger(d_chr/2)-27500 + 300 + (elem * 1100));      
-    //   if (elem < 49) {        
-    //     initializeGenomicElement(g4, asInteger(d_chr/2)-27500 + 301 + (elem * 1100), asInteger(d_chr/2)-27500 + 1300 + (elem * 1100));
-    //   }
-    // }
-    // initializeGenomicElement(g2, asInteger(d_chr/2)+27500-800+1, asInteger(d_chr/2)+27500);
-    // initializeGenomicElement(g1, asInteger(d_chr/2)+27500+1, d_chr);
-    
     initializeRecombinationRate(d_rr); // uniform recombination rate d_rr
 }
 
 
 1 early(){
-  defineConstant("simID", getSeed());
+  //defineConstant("simID", getSeed());
   sim.addSubpop("p1", d_ne); 
 }
-
 
 BURN_IN late() { // run to generation 10Ne, Burn-in phase to allow the population to equilibrate 
     prefix = outputPathPrefix + "burnin";
