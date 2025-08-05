@@ -20,5 +20,6 @@ conda activate test-slim
 
 echo "Starting job at $(date)"  # Print the current date
 cd ../1_constant
+mkdir -p ../output/1_1_constant_neutral
 slim 1_constant_neutral.slim
 echo "Ending job at $(date)" 

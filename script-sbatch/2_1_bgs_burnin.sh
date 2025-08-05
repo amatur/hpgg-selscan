@@ -19,5 +19,6 @@ conda activate test-slim
 
 echo "Starting job at $(date)"  # Print the current date
 cd ../2_bgs
+mkdir -p ../output/2_1_bgs_burnin
 slim 1_bgs_burnin.slim
 echo "Ending job at $(date)" 
