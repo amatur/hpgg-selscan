@@ -1,0 +1,61 @@
+// SLiM script for constant neutral model simulation
+// does not require recap
+// requires SLiM version 3.6 or later
+// use any of the output trees for analysis
+
+initialize() {
+    initializeSLiMOptions(keepPedigrees=T);
+    initializeTreeSeq();
+
+    defineConstant("d_chr", 10000000);
+    defineConstant("d_rr", 1e-8);
+    defineConstant("d_mr", 1.29e-8);
+
+    defineConstant("d_ne", 10000);
+    defineConstant("outputPathPrefix", "../output/1_1_constant_neutral/");
+    defineConstant("sampleTimes", c(100100, 100200, 100300, 100400, 100500, 101000, 102000));
+    defineConstant("MAX_GEN", 102000);
+
+    initializeMutationRate(d_mr);
+    initializeMutationType("m1", 0.5, "f", 0.0); // neutral 
+    initializeGenomicElementType("g1", m1, 1.0); // m1 is mutation type used in this region, all mutations use m1
+    initializeGenomicElement(g1, 0, d_chr - 1);
+    initializeRecombinationRate(d_rr);
+}
+
+1 early() {
+    sim.addSubpop("p1", d_ne);
+    defineConstant("simID", getSeed());
+}
+
+late() {
+    if (any(sampleTimes == community.tick)) {
+        prefix = outputPathPrefix + "gen" + community.tick;
+        sim.treeSeqOutput(prefix + ".trees");
+        cat("Output at gen " + community.tick + ": " + prefix + ".trees\n");
+
+        // Look for neutral mutations at particular frequency
+        // for (mut in sim.mutations) {
+        //     count = 0;
+        //     for (genome in sim.subpopulations.genomes) {
+        //         if (genome.containsMutations(mut)) {
+        //             count = count + 1;
+        //         }
+        //     }
+        //     freq = count / sim.subpopulations.genomes.size();
+        //     if (freq >= 0 & freq <= 1) {
+        //         cat("Mutation " + mut.id + " at position " + mut.position + " has frequency: " + freq + "\n");
+        //     }
+        // }
+    }
+
+    if (community.tick == MAX_GEN) {
+        cat("Reached MAX_GEN = " + MAX_GEN + "\n");
+        sim.simulationFinished();
+    }
+}
+
+// Dummy callback at final generation to keep SLiM alive
+MAX_GEN late() {
+    // Nothing here — this ensures SLiM keeps running until gen 11000
+}

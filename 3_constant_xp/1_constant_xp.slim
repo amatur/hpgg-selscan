@@ -1,0 +1,131 @@
+// sweep_recap_with_restart.slim
+
+initialize() {
+    initializeSLiMOptions(keepPedigrees=T);
+    initializeTreeSeq();
+
+    defineConstant("d_sel", 0.1);
+    defineConstant("d_mloc", 5000000);
+    defineConstant("d_chr", 10000000);
+    defineConstant("d_rr", 1e-8);
+    defineConstant("d_hapsel", 1);
+    defineConstant("outputPathPrefix", "../output/3_xp");
+    defineConstant("sampleTimes", c(100, 200, 300, 400, 500, 1000, 2000));
+    defineConstant("d_ne", 10000);
+    defineConstant("DRIFT_GEN", 50);
+    defineConstant("MAX_GEN", 2000);
+    defineConstant("MUT_GEN", 100); // generation to introduce beneficial mutation
+    defineConstant("SURVIVAL_CHECK_GEN", MUT_GEN + DRIFT_GEN);
+    
+    initializeMutationRate(0);
+    initializeMutationType("m2", 0.5, "f", d_sel);
+    m2.convertToSubstitution = F;
+    m2.mutationStackPolicy = "l";
+    initializeGenomicElementType("g1", m2, 1.0);
+    initializeGenomicElement(g1, 0, d_chr - 1);
+    initializeRecombinationRate(d_rr);
+}
+
+1 early() {
+    sim.addSubpop("p1", d_ne);
+    sim.setValue("attempt", 0);
+    sim.setValue("mutationSurvived", F);
+    sim.setValue("hasFixed", F);
+    
+    // Save initial burn-in state
+    sim.treeSeqOutput(outputPathPrefix + "burnin.trees");
+    catn("Saved burn-in population to burnin.trees");
+}
+
+function (void) introduceSweep(void) {
+    sim.setValue("attempt", sim.getValue("attempt") + 1);
+    sim.setValue("mutationSurvived", F);
+    sim.setValue("hasFixed", F);
+
+    muts = sim.mutationsOfType(m2);
+    if (size(muts) > 0) {
+        for (mut in muts) {
+            sim.mutationFrequencies(NULL, mut); // clear old mutations? Optional.
+        }
+        // Remove old sweep mutations:
+        p1.genomes.removeMutationsOfType(m2);
+    }
+
+    targetGenomes = sample(p1.genomes, d_hapsel);
+    for (g in targetGenomes) {
+        g.addNewDrawnMutation(m2, d_mloc);
+    }
+    
+    muts = sim.mutationsOfType(m2);
+    if (size(muts) == 1) {
+        sim.setValue("beneficialMutId", muts[0].id);
+        catn("Attempt #" + sim.getValue("attempt") + ": Introduced sweep mutation at gen " + sim.generation);
+    } else {
+        catn("Warning: unexpected mutation count after intro: " + size(muts));
+    }
+}
+
+function (void) reloadSim(void) {
+    catn("Reloading burn-in population and resetting seed...");
+    sim.readFromPopulationFile(outputPathPrefix + "burnin.trees");
+    sim.setValue("hasFixed", F);
+    sim.setValue("mutationSurvived", F);
+    sim.setValue("beneficialMutId", NULL);
+    introduceSweep();
+}
+
+MUT_GEN late() {
+    introduceSweep();
+}
+
+SURVIVAL_CHECK_GEN late() {
+    muts = sim.mutationsOfType(m2);
+    if (size(muts) != 1) {
+        catn("Sweep lost early (mutation missing at gen " + sim.generation + "), restarting...");
+        reloadSim();
+    } else {
+        afs = sim.mutationFrequencies(NULL, muts);
+        af = afs[0];
+        if (af == 0) {
+            catn("Sweep lost early (AF=0) at gen " + sim.generation + "), restarting...");
+            reloadSim();
+        } else {
+            sim.setValue("mutationSurvived", T);
+            catn("Sweep survived early drift with AF = " + af);
+        }
+    }
+}
+
+late() {
+    muts = sim.mutationsOfType(m2);
+    af = 0.0;
+    if (size(muts) == 1) {
+        afs = sim.mutationFrequencies(NULL, muts);
+        af = afs[0];
+    }
+    
+    catn("Gen " + sim.generation + ": Sweep AF = " + af);
+    
+    if (af == 0.0 && sim.generation > SURVIVAL_CHECK_GEN) {
+        catn("Sweep lost after drift, restarting...");
+        reloadSim();
+    }
+    
+    if (af == 1.0 && !sim.getValue("hasFixed")) {
+        sim.setValue("hasFixed", T);
+        catn("Sweep fixed at gen " + sim.generation);
+        prefix = outputPathPrefix + "fixed_gen" + sim.generation;
+        sim.treeSeqOutput(prefix + ".trees");
+    }
+    
+    if (any(sampleTimes + MUT_GEN == sim.generation)) {
+        prefix = outputPathPrefix + "gen" + (sim.generation - MUT_GEN);
+        catn("Saving tree sequence at " + prefix);
+        sim.treeSeqOutput(prefix + ".trees");
+    }
+    
+    if (sim.generation >= MAX_GEN) {
+        catn("Reached max generation. Ending simulation.");
+        sim.simulationFinished();
+    }
+}
