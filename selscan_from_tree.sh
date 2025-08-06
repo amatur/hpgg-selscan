@@ -57,6 +57,7 @@ python "$SCRIPT_RECAP_MUT_SAMPLE" \
     --random \
     --vcf \
     --tree > "$LOG" 2>&1
+exit 1
 
 # ======= Step 2: Filter for biallelic SNPs =======
 TMP_OUT="${DIR}/${BASENAME}_tmp"

@@ -18,6 +18,11 @@ parser.add_argument("--vcf", action="store_true", help="Write VCF output")
 parser.add_argument("--tree", action="store_true", help="Write .trees output")
 parser.add_argument("--recomb", type=float, default=1e-8, help="Recombination rate per base per generation")
 parser.add_argument("--ne", type=float, default=1e4, help="Ancestral effective population size")
+
+parser.add_argument("--norecap", action="store_true",
+                    help="If set, do not recapitate the tree sequence before mutation overlay")
+
+
 args = parser.parse_args()
 
 source_file = args.source
@@ -27,11 +32,12 @@ r_seed = random.randint(0, 2**31 - 1)
 print(f"Generated random seed for recap: {r_seed}")
 
 # Recapitate the tree sequence
-ts = pyslim.recapitate(ts,
-   recombination_rate=args.recomb,
-   ancestral_Ne=args.ne,
-   random_seed=args.seed if args.seed is not None else r_seed,
-)
+if not args.norecap:
+    ts = pyslim.recapitate(ts, recombination_rate=args.recomb, ancestral_Ne=args.ne, random_seed=args.seed if args.seed is not None else r_seed)
+    print("Recapitation completed.")
+else:
+    print("Skipping recapitation as --norecap is set.")
+
 
 if args.random:
     # if args.sample_size is None or args.seed is None:

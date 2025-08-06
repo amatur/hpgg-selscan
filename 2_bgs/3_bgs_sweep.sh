@@ -4,7 +4,7 @@
 #SBATCH --error=%x.err          # Error file (%j will be replaced with the job ID)
 #SBATCH --ntasks=1                    # Number of tasks (processes)
 #SBATCH --cpus-per-task=1            # Number of CPU cores per task
-#SBATCH --mem=8G                      # Memory per node (10GB in this case)
+#SBATCH --mem=50G                      # Memory per node (10GB in this case)
 #SBATCH --time=24:00:00               # Time limit (hh:mm:ss)
 #SBATCH --mail-user=aur1111@psu.edu  # Email address for notifications
 #SBATCH --mail-type=END,FAIL               # Send email on all events (BEGIN, END, FAIL, REQUEUE, etc.)
