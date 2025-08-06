@@ -7,7 +7,7 @@ initialize() {
     initializeSLiMOptions(keepPedigrees=T);
     initializeTreeSeq();
 
-    defineConstant("d_chr", 10000000);
+    defineConstant("d_chr", 10000000); // 10 MB
     defineConstant("d_rr", 1e-8);
     defineConstant("d_mr", 1.29e-8);
 
@@ -25,7 +25,7 @@ initialize() {
 
 1 early() {
     sim.addSubpop("p1", d_ne);
-    defineConstant("simID", getSeed());
+    //defineConstant("simID", getSeed());
 }
 
 late() {

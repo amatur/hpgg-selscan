@@ -6,19 +6,20 @@ initialize() {
     initializeSLiMOptions(keepPedigrees=T);
     initializeTreeSeq();
 
-    // Directly define constants with fixed values
-    defineConstant("d_sel", 0.1);
-    defineConstant("d_mloc", 5000000);
-    defineConstant("d_chr", 10000000);
-    defineConstant("d_rr", 1e-8);
-    defineConstant("d_hapsel", 1);
+    defineConstant("d_sel", 0.1); // Selection coefficient for the sweep
+    defineConstant("d_mloc", 5000000); // Location of the beneficial mutation 5 MB
+    defineConstant("d_chr", 10000000); // Chromosome length 10 MB
+    defineConstant("d_rr", 1e-8); // Recombination rate
+    defineConstant("d_hapsel", 1); // Number of haplotypes to select for the sweep
     defineConstant("outputPathPrefix", "../output/1_2_constant_sweep/");
-    defineConstant("sampleTimes", c(100, 200, 300, 400, 500, 1000, 2000));
-    defineConstant("d_ne", 10000); 
-    defineConstant("DRIFT_GEN", 1); // Generation after which we check if sweep survived drift
+    
+    defineConstant("d_ne", 10000); // Effective population size
+
     defineConstant("MAX_GEN", 2000); // Maximum generation to run the simulation
-    defineConstant("MUT_GEN", 1); // Generation when beneficial mutation introduced, 1
+    defineConstant("MUT_GEN", 1); // Generation when beneficial mutation introduced,
+    defineConstant("DRIFT_GEN", 1); // Generation after which we check if sweep survived drift
     defineConstant("SURVIVAL_CHECK_GEN", MUT_GEN + DRIFT_GEN); // Generation to check if sweep survived early drift
+    defineConstant("sampleTimes", c(100, 200, 300, 400, 500, 1000, 2000));
 
     initializeMutationRate(0);
     initializeMutationType("m2", 0.5, "f", d_sel);

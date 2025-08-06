@@ -6,27 +6,36 @@ initialize() {
     initializeSLiMOptions(keepPedigrees=T);
     initializeTreeSeq();
 
-    // Directly define constants with fixed values
+    defineConstant("outputPathPrefix", "../output/2_3_bgs_sweep/");
     defineConstant("d_sel", 0.1);
     defineConstant("d_mloc", 5000000);
     defineConstant("d_chr", 10000000);
     defineConstant("d_rr", 1e-8);
+    defineConstant("d_mr", 1.29e-8); // mutation rate per base per generation
     defineConstant("d_hapsel", 1);
-    defineConstant("outputPathPrefix", "../output/2_3_bgs_sweep/");
     defineConstant("sampleTimes", c(100100, 100200, 100300, 100400, 100500, 101000, 102000));
-    defineConstant("d_ne", 10000); 
-    defineConstant("DRIFT_GEN", 1); // Generation after which we check if sweep survived drift
+    defineConstant("d_ne", 10000);
+    defineConstant("DRIFT_GEN", 0); // Generation after which we check if sweep survived drift
     defineConstant("MAX_GEN", 102000); // Maximum generation to run the simulation
-    defineConstant("MUT_GEN", 1); // Generation when beneficial mutation introduced, 1
+    defineConstant("MUT_GEN", 100000); // Generation when beneficial mutation introduced, 1
     defineConstant("SURVIVAL_CHECK_GEN", MUT_GEN + DRIFT_GEN); // Generation to check if sweep survived early drift
 
-    initializeMutationRate(0);
-    initializeMutationType("m2", 0.5, "f", d_sel);
-    m2.convertToSubstitution = F;
-    m2.mutationStackPolicy   = "l";
-    initializeGenomicElementType("g1", m2, 1.0);
-    initializeGenomicElement(g1, 0, d_chr - 1);
-    initializeRecombinationRate(d_rr);
+    // -----------FROM BURNIN-----------
+    initializeMutationRate(d_mr);     // uniform mutation rate of d_mr
+    
+    // -- NEUTRAL + BACKGROUND SELECTION PARAMETERS --
+    initializeMutationType("m1", 0.5, "f", 0.0);             // m1 mutation type: neutral
+    initializeMutationType("m2", 0.1, "g", -d_sel, 0.2);     // m2 mutation type: recessive negative selection with gamma distribution of mean 0.1 and shape 0.2
+
+    // g1 genome element type is an intron, 10% of mutations are deleterious
+    initializeGenomicElementType("g1", c(m1,m2), c(9,1)); //10% of mutations are deleterious (m2), 90% are neutral (m1)
+    initializeGenomicElement(g1, 0, d_chr - 1);   // uniform chromosome of length d_chr in bases
+
+    initializeRecombinationRate(d_rr); // uniform recombination rate d_rr
+
+    initializeMutationType("m3", 0.5, "f", d_sel); // m3 mutation type: sweep 
+    m3.convertToSubstitution = F;
+    m3.mutationStackPolicy   = "l";
 }
 
 function (void) defineCfgParam(string$ name, lifs value) {
@@ -35,8 +44,17 @@ function (void) defineCfgParam(string$ name, lifs value) {
 }
 
 1 early()  {
-    sim.readFromPopulationFile("../output/2_1_bgs_burnin/burnin.trees");
+    burninFile = "../output/2_1_bgs_burnin/burnin.trees";
+    sim.readFromPopulationFile(burninFile);
+    //Re-enable tree sequence output after loading
+    sim.treeSeqOutputEnabled = T;
+
+    // Optionally remember all individuals to preserve ancestry in output
+    //sim.treeSeqRememberIndividuals(sim.subpopulations.individuals);
+
+    catn("Loaded burn-in tree sequence from: " + burninFile);
 }
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -47,10 +65,10 @@ MUT_GEN late() {
     // Choose founding haplotype(s)
     targetGenomes = sample(p1.genomes, d_hapsel);
     for (genome in targetGenomes) {
-        genome.addNewDrawnMutation(m2, d_mloc);
+        genome.addNewDrawnMutation(m3, d_mloc);
     }   
 
-    mut = sim.mutationsOfType(m2)[0];
+    mut = sim.mutationsOfType(m3)[0];
     sim.setValue("beneficialMutId", mut.id);    
 }
 
@@ -73,9 +91,9 @@ function (void) introduceSweep(void) {
 
     targetGenomes = sample(p1.genomes, d_hapsel);
     for (g in targetGenomes) {
-        g.addNewDrawnMutation(m2, d_mloc);
+        g.addNewDrawnMutation(m3, d_mloc);
     }
-    muts = sim.mutationsOfType(m2);
+    muts = sim.mutationsOfType(m3);
     if (size(muts) == 1) {
         sim.setValue("beneficialMutId", muts[0].id);
         cat("Attempt #" + sim.getValue("attempt") +
@@ -94,7 +112,7 @@ function (void) reloadSim(void){
 
 // Check if mutation survived early drift (by gen 10050)
 SURVIVAL_CHECK_GEN late() {
-    muts = sim.mutationsOfType(m2);
+    muts = sim.mutationsOfType(m3);
     afs = sim.mutationFrequencies(NULL, muts);
 
     if (size(muts) != 1) {
@@ -110,7 +128,7 @@ SURVIVAL_CHECK_GEN late() {
 
 // Track allele frequency, sample, detect fixation
 late() {
-    muts = sim.mutationsOfType(m2);
+    muts = sim.mutationsOfType(m3);
     afs = sim.mutationFrequencies(NULL, muts);
 
     if(size(afs) == 1){
