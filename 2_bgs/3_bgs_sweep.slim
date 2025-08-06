@@ -7,6 +7,7 @@ initialize() {
     initializeTreeSeq();
 
     defineConstant("outputPathPrefix", "../output/2_3_bgs_sweep/");
+    defineConstant("burnInFile", "../output/2_1_bgs_burnin/burnin.trees");
     defineConstant("d_sel", 0.1);
     defineConstant("d_mloc", 5000000);
     defineConstant("d_chr", 10000000);
@@ -19,13 +20,14 @@ initialize() {
     defineConstant("MAX_GEN", 102000); // Maximum generation to run the simulation
     defineConstant("MUT_GEN", 100000); // Generation when beneficial mutation introduced, 1
     defineConstant("SURVIVAL_CHECK_GEN", MUT_GEN + DRIFT_GEN); // Generation to check if sweep survived early drift
+    defineConstant("BURN_IN", 100000); // burn in 10*Ne
 
     // -----------FROM BURNIN-----------
     //initializeMutationRate(d_mr);     // uniform mutation rate of d_mr
-    initializeMutationRate(0);
+    //initializeMutationRate(0);
     // -- NEUTRAL + BACKGROUND SELECTION PARAMETERS --
-    initializeMutationType("m1", 0.5, "f", 0.0);             // m1 mutation type: neutral
-    initializeMutationType("m2", 0.1, "g", -d_sel, 0.2);     // m2 mutation type: recessive negative selection with gamma distribution of mean 0.1 and shape 0.2
+    // initializeMutationType("m1", 0.5, "f", 0.0);             // m1 mutation type: neutral
+    // initializeMutationType("m2", 0.1, "g", -d_sel, 0.2);     // m2 mutation type: recessive negative selection with gamma distribution of mean 0.1 and shape 0.2
 
     // // g1 genome element type is an intron, 10% of mutations are deleterious
     initializeGenomicElementType("g1", c(m1,m2), c(9,1)); //10% of mutations are deleterious (m2), 90% are neutral (m1)
@@ -47,9 +49,9 @@ initialize() {
   //sim.addSubpop("p1", d_ne); 
   sim.setValue("hasFixed", F);
   
-  burninFile = "../output/2_1_bgs_burnin/burnin.trees";
+  //burninFile = "../output/2_1_bgs_burnin/burnin.trees";
   sim.readFromPopulationFile(burninFile);
-     catn("Loaded burn-in tree sequence from: " + burninFile);
+  catn("Loaded burn-in tree sequence from: " + burninFile);
 
 
 }
@@ -100,9 +102,8 @@ MUT_GEN late() {
     sim.setValue("mutationSurvived", F);
     sim.setValue("hasFixed", F);
 
-    baseOutputPath = outputPathPrefix;
-    catn("Output path prefix: " + baseOutputPath);
-    sim.outputFull(baseOutputPath+"/slim_" + simID + ".txt"); // save the state of the simulation
+    catn("Output path prefix: " + outputPathPrefix);
+    sim.outputFull(outputPathPrefix+"/slim_" + simID + ".txt"); // save the state of the simulation
     cat("Loaded last slim simulation; current generation = " + community.tick + " at attempt " + sim.getValue("attempt")+ "\n");
     introduceSweep();  
 }
@@ -132,6 +133,7 @@ function (void) introduceSweep(void) {
 function (void) reloadSim(void){
     baseOutputPath = outputPathPrefix;
     sim.readFromPopulationFile(baseOutputPath + "/slim_" + simID + ".txt");
+    //sim.readFromPopulationFile(burnInFile);
     setSeed(rdunif(1, 0, asInteger(2^62) - 1));
 }
 
