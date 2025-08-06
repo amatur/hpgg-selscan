@@ -13,7 +13,8 @@ initializeSLiMOptions(keepPedigrees=T);
     defineConstant("d_mr", 1.29e-8); // mutation rate per base per generation
     defineConstant("d_ne", 10000); 
     defineConstant("BURN_IN", 100000); // burn in 10*Ne
-
+    defineConstant("d_sel", 0.1);
+    
     initializeMutationRate(d_mr);     // uniform mutation rate of d_mr
     
     // -- NEUTRAL + BACKGROUND SELECTION PARAMETERS --
