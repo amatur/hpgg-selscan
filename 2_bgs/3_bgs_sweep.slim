@@ -153,7 +153,6 @@ SURVIVAL_CHECK_GEN late() {
 // Track allele frequency, sample, detect fixation
 late() {
     if ( community.tick < MUT_GEN) {
-        cat("Mutation did not survive early drift, skipping frequency check\n");
         return;
     }
 
