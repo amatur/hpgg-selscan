@@ -42,8 +42,13 @@ initialize() {
 
 1 early(){
   defineConstant("simID", getSeed());
-  sim.addSubpop("p1", d_ne); 
-    sim.setValue("hasFixed", F);
+  //sim.addSubpop("p1", d_ne); 
+  sim.setValue("hasFixed", F);
+  
+  burninFile = "../output/2_1_bgs_burnin/burnin.trees";
+  sim.readFromPopulationFile(burninFile);
+     catn("Loaded burn-in tree sequence from: " + burninFile);
+
 
 }
 
@@ -53,11 +58,6 @@ function (void) defineCfgParam(string$ name, lifs value) {
 }
 
 BURNIN late()  {
-    burninFile = "../output/2_1_bgs_burnin/burnin.trees";
-    sim.readFromPopulationFile(burninFile);
-    // Assign p1 to first subpopulation object (runtime variable)
-    
-
 
     //Re-enable tree sequence output after loading
     // sim.treeSeqOutputEnabled = T;
@@ -65,8 +65,7 @@ BURNIN late()  {
     // Optionally remember all individuals to preserve ancestry in output
     //sim.treeSeqRememberIndividuals(sim.subpopulations.individuals);
 
-    catn("Loaded burn-in tree sequence from: " + burninFile);
-
+ 
     sim.setValue("hasFixed", F);
 
 }
