@@ -37,7 +37,6 @@ initialize() {
     m3.convertToSubstitution = F;
     m3.mutationStackPolicy   = "l";
 
-    defineConstant("p1", sim.subpopulations[0]);
 
 }
 
@@ -49,6 +48,10 @@ function (void) defineCfgParam(string$ name, lifs value) {
 BURNIN late()  {
     burninFile = "../output/2_1_bgs_burnin/burnin.trees";
     sim.readFromPopulationFile(burninFile);
+    // Assign p1 to first subpopulation object (runtime variable)
+    p1 = sim.subpopulations[0];
+
+
     //Re-enable tree sequence output after loading
     // sim.treeSeqOutputEnabled = T;
 
