@@ -43,6 +43,8 @@ initialize() {
 1 early(){
   defineConstant("simID", getSeed());
   sim.addSubpop("p1", d_ne); 
+    sim.setValue("hasFixed", F);
+
 }
 
 function (void) defineCfgParam(string$ name, lifs value) {
