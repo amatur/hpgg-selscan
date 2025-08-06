@@ -24,7 +24,7 @@ initialize() {
 
     // -----------FROM BURNIN-----------
     //initializeMutationRate(d_mr);     // uniform mutation rate of d_mr
-    //initializeMutationRate(0);
+    initializeMutationRate(0);
     // -- NEUTRAL + BACKGROUND SELECTION PARAMETERS --
     initializeMutationType("m1", 0.5, "f", 0.0);             // m1 mutation type: neutral
     initializeMutationType("m2", 0.1, "g", -d_sel, 0.2);     // m2 mutation type: recessive negative selection with gamma distribution of mean 0.1 and shape 0.2
