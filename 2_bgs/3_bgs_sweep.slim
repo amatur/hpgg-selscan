@@ -21,14 +21,16 @@ initialize() {
     defineConstant("SURVIVAL_CHECK_GEN", MUT_GEN + DRIFT_GEN); // Generation to check if sweep survived early drift
 
     // -----------FROM BURNIN-----------
-    initializeMutationRate(d_mr);     // uniform mutation rate of d_mr
-    
+    //initializeMutationRate(d_mr);     // uniform mutation rate of d_mr
+    initializeMutationRate(0);
     // -- NEUTRAL + BACKGROUND SELECTION PARAMETERS --
-    initializeMutationType("m1", 0.5, "f", 0.0);             // m1 mutation type: neutral
-    initializeMutationType("m2", 0.1, "g", -d_sel, 0.2);     // m2 mutation type: recessive negative selection with gamma distribution of mean 0.1 and shape 0.2
+    // initializeMutationType("m1", 0.5, "f", 0.0);             // m1 mutation type: neutral
+    // initializeMutationType("m2", 0.1, "g", -d_sel, 0.2);     // m2 mutation type: recessive negative selection with gamma distribution of mean 0.1 and shape 0.2
 
-    // g1 genome element type is an intron, 10% of mutations are deleterious
-    initializeGenomicElementType("g1", c(m1,m2), c(9,1)); //10% of mutations are deleterious (m2), 90% are neutral (m1)
+    // // g1 genome element type is an intron, 10% of mutations are deleterious
+    // initializeGenomicElementType("g1", c(m1,m2), c(9,1)); //10% of mutations are deleterious (m2), 90% are neutral (m1)
+    
+    
     initializeGenomicElement(g1, 0, d_chr - 1);   // uniform chromosome of length d_chr in bases
 
     initializeRecombinationRate(d_rr); // uniform recombination rate d_rr
