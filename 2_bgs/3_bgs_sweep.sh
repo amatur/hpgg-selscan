@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=2_bgs_sweep        # Job name
+#SBATCH --job-name=3_bgs_sweep        # Job name
 #SBATCH --output=%x.out        # Output file (%j will be replaced with the job ID)
 #SBATCH --error=%x.err          # Error file (%j will be replaced with the job ID)
 #SBATCH --ntasks=1                    # Number of tasks (processes)
@@ -18,6 +18,6 @@ source $(conda info --base)/etc/profile.d/conda.sh
 conda activate test-slim
 
 echo "Starting job at $(date)"  # Print the current date
-mkdir -p ../output/2_2_bgs_sweep
-slim 2_bgs_sweep.slim
+mkdir -p ../output/2_3_bgs_sweep
+slim 3_bgs_sweep.slim
 echo "Ending job at $(date)" 
