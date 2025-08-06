@@ -64,6 +64,9 @@ BURNIN late()  {
     //sim.treeSeqRememberIndividuals(sim.subpopulations.individuals);
 
     catn("Loaded burn-in tree sequence from: " + burninFile);
+
+    sim.setValue("hasFixed", F);
+
 }
 
 
@@ -178,7 +181,7 @@ late() {
         cat(" ↳ wrote " + prefix + ".trees and _freq.txt\n");
     }
 
-    if (af == 1.0 & (!sim.containsValue("hasFixed") | !sim.getValue("hasFixed"))) {
+    if (af == 1.0 &  !sim.getValue("hasFixed")) {
         sim.setValue("hasFixed", T);
         cat("Sweep fixed at gen " + community.tick + "\n");
 
