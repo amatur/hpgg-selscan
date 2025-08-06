@@ -69,11 +69,16 @@ BURNIN late()  {
 MUT_GEN late() {
     // ---- Introduce beneficial mutation ------------------------------------
     // Choose founding haplotype(s)
-    p1 = sim.subpopulations[0];
-    targetGenomes = sample(p1.genomes, d_hapsel);
-    for (genome in targetGenomes) {
-        genome.addNewDrawnMutation(m3, d_mloc);
-    }   
+
+    for (p1 in sim.subpopulations) {
+        //catn("Subpop ID: " + p1.id + ", Name: " + p1.name + ", Size: " + p1.individualCount);
+        targetGenomes = sample(p1.genomes, d_hapsel);
+        for (genome in targetGenomes) {
+            genome.addNewDrawnMutation(m3, d_mloc);
+        }   
+    }
+
+    
 
     mut = sim.mutationsOfType(m3)[0];
     sim.setValue("beneficialMutId", mut.id);    
@@ -96,11 +101,13 @@ function (void) introduceSweep(void) {
     sim.setValue("mutationSurvived", F);
     sim.setValue("hasFixed", F);
 
-    p1 = sim.subpopulations[0];
-    targetGenomes = sample(p1.genomes, d_hapsel);
-    for (g in targetGenomes) {
-        g.addNewDrawnMutation(m3, d_mloc);
+    for (p1 in sim.subpopulations) {
+        targetGenomes = sample(p1.genomes, d_hapsel);
+        for (g in targetGenomes) {
+            g.addNewDrawnMutation(m3, d_mloc);
+        }
     }
+    
     muts = sim.mutationsOfType(m3);
     if (size(muts) == 1) {
         sim.setValue("beneficialMutId", muts[0].id);
@@ -156,8 +163,7 @@ late() {
         cat("prefix: "+ prefix + "\n");
         sim.treeSeqOutput(prefix + ".trees");
 
-        p1 = sim.subpopulations[0];
-        phase = p1.individualCount;
+        phase = 0;
 
         f = prefix + "_freq.txt";
         line2 =  paste(community.tick-MUT_GEN, sim.getValue("attempt"), af, phase, sep='\t');
