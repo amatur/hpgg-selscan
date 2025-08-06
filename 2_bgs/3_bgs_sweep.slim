@@ -43,11 +43,11 @@ function (void) defineCfgParam(string$ name, lifs value) {
         defineConstant(name, value);
 }
 
-1 early()  {
+BURNIN late()  {
     burninFile = "../output/2_1_bgs_burnin/burnin.trees";
     sim.readFromPopulationFile(burninFile);
     //Re-enable tree sequence output after loading
-    sim.treeSeqOutputEnabled = T;
+    // sim.treeSeqOutputEnabled = T;
 
     // Optionally remember all individuals to preserve ancestry in output
     //sim.treeSeqRememberIndividuals(sim.subpopulations.individuals);

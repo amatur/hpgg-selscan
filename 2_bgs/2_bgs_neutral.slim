@@ -8,13 +8,13 @@ initializeSLiMOptions(keepPedigrees=T);
     initializeTreeSeq();
 
     defineConstant("outputPathPrefix", "../output/2_2_bgs_neutral/");
-    defineConstant("d_chr", 1000); // 10 Mb 10000000
+    defineConstant("d_chr", 10000000); // 10 Mb 10000000
     defineConstant("d_rr", 1e-8);
     defineConstant("d_mr", 1.29e-8); // mutation rate per base per generation
     defineConstant("d_ne", 10000); 
     defineConstant("BURN_IN", 100000); // burn in 10*Ne
     defineConstant("d_sel", 0.1);
-    
+
     initializeMutationRate(d_mr);     // uniform mutation rate of d_mr
     
     // -- NEUTRAL + BACKGROUND SELECTION PARAMETERS --
@@ -29,7 +29,7 @@ initializeSLiMOptions(keepPedigrees=T);
 }
 
 
-1 early()  {
+BURN_IN late()  {
     sim.readFromPopulationFile("../output/2_1_bgs_burnin/burnin.trees");
 }
 
