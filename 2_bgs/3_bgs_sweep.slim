@@ -36,6 +36,9 @@ initialize() {
     initializeMutationType("m3", 0.5, "f", d_sel); // m3 mutation type: sweep 
     m3.convertToSubstitution = F;
     m3.mutationStackPolicy   = "l";
+
+    defineConstant("p1", sim.subpopulations[0]);
+
 }
 
 function (void) defineCfgParam(string$ name, lifs value) {
