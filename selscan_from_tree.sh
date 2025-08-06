@@ -55,7 +55,7 @@ python "$SCRIPT_RECAP_MUT_SAMPLE" \
     --recomb "$RECOMB_RATE" \
     --sample_size "$D_SAMP" \
     --random \
-    --vcf \
+    --vcf --norecap \
     --tree > "$LOG" 2>&1
 exit 1
 
