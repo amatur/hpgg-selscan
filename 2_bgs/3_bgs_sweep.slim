@@ -40,6 +40,11 @@ initialize() {
 
 }
 
+1 early(){
+  defineConstant("simID", getSeed());
+  sim.addSubpop("p1", d_ne); 
+}
+
 function (void) defineCfgParam(string$ name, lifs value) {
     if (!exists(name))
         defineConstant(name, value);
@@ -70,13 +75,13 @@ MUT_GEN late() {
     // ---- Introduce beneficial mutation ------------------------------------
     // Choose founding haplotype(s)
 
-    for (p1 in sim.subpopulations) {
+    //for (p1 in sim.subpopulations) {
         //catn("Subpop ID: " + p1.id + ", Name: " + p1.name + ", Size: " + p1.individualCount);
         targetGenomes = sample(p1.genomes, d_hapsel);
         for (genome in targetGenomes) {
             genome.addNewDrawnMutation(m3, d_mloc);
         }   
-    }
+    //}
 
     
 
@@ -101,12 +106,12 @@ function (void) introduceSweep(void) {
     sim.setValue("mutationSurvived", F);
     sim.setValue("hasFixed", F);
 
-    for (p1 in sim.subpopulations) {
+    //for (p1 in sim.subpopulations) {
         targetGenomes = sample(p1.genomes, d_hapsel);
         for (g in targetGenomes) {
             g.addNewDrawnMutation(m3, d_mloc);
         }
-    }
+    //}
     
     muts = sim.mutationsOfType(m3);
     if (size(muts) == 1) {
