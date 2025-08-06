@@ -14,7 +14,7 @@ initialize() {
     defineConstant("d_rr", 1e-8);
     defineConstant("d_mr", 1.29e-8); // mutation rate per base per generation
     defineConstant("d_hapsel", 1);
-    defineConstant("sampleTimes", c(100100, 100200, 100300, 100400, 100500, 101000, 102000));
+    defineConstant("sampleTimes", c(100, 200, 300, 400, 500, 1000, 2000));
     defineConstant("d_ne", 10000);
     defineConstant("DRIFT_GEN", 0); // Generation after which we check if sweep survived drift
     defineConstant("MAX_GEN", 102000); // Maximum generation to run the simulation
@@ -23,8 +23,8 @@ initialize() {
     defineConstant("BURN_IN", 100000); // burn in 10*Ne
 
     // -----------FROM BURNIN-----------
-    //initializeMutationRate(d_mr);     // uniform mutation rate of d_mr
-    initializeMutationRate(0);
+    initializeMutationRate(d_mr);     // uniform mutation rate of d_mr
+    //initializeMutationRate(0);
     // -- NEUTRAL + BACKGROUND SELECTION PARAMETERS --
     initializeMutationType("m1", 0.5, "f", 0.0);             // m1 mutation type: neutral
     initializeMutationType("m2", 0.1, "g", -d_sel, 0.2);     // m2 mutation type: recessive negative selection with gamma distribution of mean 0.1 and shape 0.2
