@@ -26,7 +26,7 @@ fi
 
 # ======= User-defined constants =======
 TREE_FILE=$1   # SLiM-generated .trees file
-SCRIPT_RECAP_MUT_SAMPLE="recap_mut_sample.py"
+SCRIPT_RECAP_MUT_SAMPLE="recap_mut_sample_xp.py"
 SELSCAN="/storage/home/aur1111/s/transfer/selscan-bugfix/selscan/src/selscan"
 #SELSCAN="/storage/home/aur1111/s/transfer/selscan/src/selscan"
 NE=10000
@@ -54,20 +54,7 @@ python "$SCRIPT_RECAP_MUT_SAMPLE" \
     --ne "$NE" \
     --recomb "$RECOMB_RATE" \
     --sample_size "$D_SAMP" \
+    --sample_size_p2 "$D_SAMP" \
     --random \
     --vcf --norecap \
-    --tree > "$LOG" 2>&1
-
-# ======= Step 2: Filter for biallelic SNPs =======
-TMP_OUT="${DIR}/${BASENAME}_tmp"
-vcftools --vcf "$VCF" \
-         --min-alleles 2 --max-alleles 2 \
-         --recode --out "$TMP_OUT"
-mv "${TMP_OUT}.recode.vcf" "$BIALLELIC_VCF"
-
-# ======= Step 3: Run selscan =======
-$SELSCAN \
-    --vcf "$BIALLELIC_VCF" \
-    --out "${DIR}/${BASENAME}" \
-    --ihs --nsl --pmap  \
-    --trunc-ok
+    --tree 

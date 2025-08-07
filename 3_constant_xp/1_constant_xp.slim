@@ -1,4 +1,4 @@
-// sweep_recap_with_restart.slim
+// sweep_recap_with_restart.slim - SLiM 4
 
 initialize() {
     initializeSLiMOptions(keepPedigrees=T);
@@ -9,14 +9,18 @@ initialize() {
     defineConstant("d_chr", 10000000);
     defineConstant("d_rr", 1e-8);
     defineConstant("d_hapsel", 1);
-    defineConstant("outputPathPrefix", "../output/3_xp");
+    defineConstant("outputPathPrefix", "../output/3_1_constant_xp/"); // ending slash important
     defineConstant("sampleTimes", c(100, 200, 300, 400, 500, 1000, 2000));
     defineConstant("d_ne", 10000);
-    defineConstant("DRIFT_GEN", 50);
-    defineConstant("MAX_GEN", 2000);
-    defineConstant("MUT_GEN", 100); // generation to introduce beneficial mutation
+    defineConstant("DRIFT_GEN", 0);
+    defineConstant("MAX_GEN", 5000);
+    defineConstant("MUT_GEN", 1500);
     defineConstant("SURVIVAL_CHECK_GEN", MUT_GEN + DRIFT_GEN);
-    
+    defineConstant("SPLIT_GEN", 500);
+    defineConstant("SPLIT_NEUTRAL_POP_SIZE", 10000); // Generation to split population into two (after burn-in and sweep introduction)
+    defineConstant("SPLIT_SWEEP_POP_SIZE", 10000); // Generation to split population into two (after burn-in and sweep introduction)
+
+
     initializeMutationRate(0);
     initializeMutationType("m2", 0.5, "f", d_sel);
     m2.convertToSubstitution = F;
@@ -28,13 +32,37 @@ initialize() {
 
 1 early() {
     sim.addSubpop("p1", d_ne);
+    defineConstant("simID", getSeed());
+
     sim.setValue("attempt", 0);
     sim.setValue("mutationSurvived", F);
     sim.setValue("hasFixed", F);
-    
-    // Save initial burn-in state
-    // sim.treeSeqOutput(outputPathPrefix + "burnin.trees");
-    // catn("Saved burn-in population to burnin.trees");
+}
+
+SPLIT_GEN early() {
+    sim.addSubpopSplit("p2", SPLIT_NEUTRAL_POP_SIZE, p1); //sample d_ne / 2 individuals from p1 into the new p2
+    p1.setSubpopulationSize(SPLIT_SWEEP_POP_SIZE); // reduce p1 size to maintain total population size
+    catn("Split complete.");
+}
+
+// 100 early() { sim.addSubpopSplit("p2", 100, p1); }
+// 100:150 early() {
+// migrationProgress = (sim.cycle - 100) / 50;
+// p1.setMigrationRates(p2, 0.2 * migrationProgress);
+// p2.setMigrationRates(p1, 0.8 * migrationProgress);
+// }
+// 1000 early() { sim.addSubpopSplit("p3", 10, p2); }
+// 1000:1100 early() {
+// p3Progress = (sim.cycle - 1000) / 100;
+// p3.setSubpopulationSize(asInteger(990 * p3Progress + 10));
+// p1.setMigrationRates(p3, 0.1 * p3Progress);
+// p2.setMigrationRates(p3, 0.01 * p3Progress);
+// }
+// 2000 early() { p2.setSubpopulationSize(0); }
+
+
+501 early() {
+    catn("After regulation: p1 = " + p1.individualCount + ", p2 = " + p2.individualCount);
 }
 
 function (void) introduceSweep(void) {
@@ -42,90 +70,115 @@ function (void) introduceSweep(void) {
     sim.setValue("mutationSurvived", F);
     sim.setValue("hasFixed", F);
 
-    muts = sim.mutationsOfType(m2);
-    if (size(muts) > 0) {
-        for (mut in muts) {
-            sim.mutationFrequencies(NULL, mut); // clear old mutations? Optional.
-        }
-        // Remove old sweep mutations:
-        p1.genomes.removeMutationsOfType(m2);
-    }
-
     targetGenomes = sample(p1.genomes, d_hapsel);
     for (g in targetGenomes) {
         g.addNewDrawnMutation(m2, d_mloc);
     }
-    
     muts = sim.mutationsOfType(m2);
     if (size(muts) == 1) {
         sim.setValue("beneficialMutId", muts[0].id);
-        catn("Attempt #" + sim.getValue("attempt") + ": Introduced sweep mutation at gen " + sim.generation);
+        cat("Attempt #" + sim.getValue("attempt") +
+            ": Introduced sweep mutation at gen " + community.tick + "\n");
     } else {
-        catn("Warning: unexpected mutation count after intro: " + size(muts));
+        cat("Unexpected number of mutations after introduction: " + size(muts) + "\n");
     }
 }
 
-function (void) reloadSim(void) {
-    catn("Reloading burn-in population and resetting seed...");
-    sim.readFromPopulationFile(outputPathPrefix + "burnin.trees");
-    sim.setValue("hasFixed", F);
-    sim.setValue("mutationSurvived", F);
-    sim.setValue("beneficialMutId", NULL);
-    introduceSweep();
+function (void) reloadSim(void){
+    sim.readFromPopulationFile(outputPathPrefix + "/slim_" + simID + ".txt");
+    setSeed(rdunif(1, 0, asInteger(2^62) - 1));
 }
+
 
 MUT_GEN late() {
-    introduceSweep();
+    sim.setValue("attempt", 0);
+    sim.setValue("mutationSurvived", F);
+    sim.setValue("hasFixed", F);
+
+    catn("Output path prefix: " + outputPathPrefix);
+    sim.outputFull(outputPathPrefix+"/slim_" + simID + ".txt"); // save the state of the simulation
+    cat("Loaded last slim simulation; current generation = " + community.tick + " at attempt " + sim.getValue("attempt")+ "\n");
+    introduceSweep();  
 }
 
+
+// Check if mutation survived early drift (by gen 10050)
 SURVIVAL_CHECK_GEN late() {
     muts = sim.mutationsOfType(m2);
+    afs = sim.mutationFrequencies(p1, muts);
+
     if (size(muts) != 1) {
-        catn("Sweep lost early (mutation missing at gen " + sim.generation + "), restarting...");
+        cat("Sweep lost before gen " + SURVIVAL_CHECK_GEN + " → restarting\n");
+        
         reloadSim();
+        introduceSweep();
     } else {
-        afs = sim.mutationFrequencies(NULL, muts);
-        af = afs[0];
-        if (af == 0) {
-            catn("Sweep lost early (AF=0) at gen " + sim.generation + "), restarting...");
-            reloadSim();
-        } else {
-            sim.setValue("mutationSurvived", T);
-            catn("Sweep survived early drift with AF = " + af);
-        }
+        sim.setValue("mutationSurvived", T);
+        cat("Sweep survived drift (AF = " + afs[0] + ") → continuing\n");
     }
 }
 
+// Track allele frequency, sample, detect fixation
 late() {
     muts = sim.mutationsOfType(m2);
-    af = 0.0;
-    if (size(muts) == 1) {
-        afs = sim.mutationFrequencies(NULL, muts);
+    afs = sim.mutationFrequencies(p1, muts);
+
+    if(size(afs) == 1){
         af = afs[0];
+    }else{
+        af = 0.0; // If mutation not found, set AF to 0
     }
-    
-    catn("Gen " + sim.generation + ": Sweep AF = " + af);
-    
-    if (af == 0.0 && sim.generation > SURVIVAL_CHECK_GEN) {
-        catn("Sweep lost after drift, restarting...");
+
+    if(community.tick >= MUT_GEN)
+        cat("Gen " + community.tick + ": AF = " + af + "\n");
+
+    if(af==0.0 & community.tick > MUT_GEN + DRIFT_GEN){
         reloadSim();
+        introduceSweep(); //re-introduce sweep if lost
     }
-    
-    if (af == 1.0 && !sim.getValue("hasFixed")) {
+
+    if (any(sampleTimes + MUT_GEN == community.tick)) {
+        prefix = outputPathPrefix + "gen" + (community.tick-MUT_GEN);
+        cat("prefix: "+ prefix + "\n");
+        sim.treeSeqOutput(prefix + ".trees");
+
+        phase = p1.individualCount;
+
+        f = prefix + "_freq.txt";
+        line2 =  paste(community.tick-MUT_GEN, sim.getValue("attempt"), af, phase, sep='\t');
+				writeFile(f, line2, append=F);
+	
+
+        cat(" ↳ wrote " + prefix + ".trees and _freq.txt\n");
+    }
+
+    if (af == 1.0 & !sim.getValue("hasFixed")) {
         sim.setValue("hasFixed", T);
-        catn("Sweep fixed at gen " + sim.generation);
-        prefix = outputPathPrefix + "fixed_gen" + sim.generation;
+        cat("Sweep fixed at gen " + community.tick + "\n");
+
+        prefix = outputPathPrefix + "gen" + community.tick + "_fixed";
         sim.treeSeqOutput(prefix + ".trees");
     }
-    
-    if (any(sampleTimes + MUT_GEN == sim.generation)) {
-        prefix = outputPathPrefix + "gen" + (sim.generation - MUT_GEN);
-        catn("Saving tree sequence at " + prefix);
+
+    if (af >= 0.74 & af <= 0.76) {
+        cat("Sweep reached 75% at gen " + community.tick + "\n");
+        prefix = outputPathPrefix + "gen" + community.tick + "_final";
         sim.treeSeqOutput(prefix + ".trees");
+
+        f = prefix + "_freq.txt";
+        phase = 0;
+        line2 =  paste(community.tick-MUT_GEN, sim.getValue("attempt"), af, phase, sep='\t');
+				writeFile(f, line2, append=F);
     }
-    
-    if (sim.generation >= MAX_GEN) {
-        catn("Reached max generation. Ending simulation.");
+
+    if (community.tick == MAX_GEN) {
+        cat("Finished at gen " + community.tick + "\n");
         sim.simulationFinished();
     }
+}
+
+
+// Dummy callback at final generation to keep SLiM alive
+MAX_GEN late() {
+    // Nothing here — this ensures SLiM keeps running until gen 11000
 }

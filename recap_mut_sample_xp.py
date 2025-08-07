@@ -8,12 +8,17 @@ import msprime
 import pyslim
 import random
 
+
+
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--source", type=str, help="Path to the input .trees file (including .trees extension)")
 parser.add_argument("--dest_prefix", type=str, required=True, help="Prefix for output files")
 parser.add_argument("--mu", type=float, required=True, help="Mutation rate per base per generation")
 parser.add_argument("--random", action="store_true", help="Sample a random subset of diploid individuals")
 parser.add_argument("--sample_size", type=int, help="Number of samples to draw (required if using --random)")
+parser.add_argument("--sample_size_p2", type=int, help="Number of samples to draw (required if using --random)")
 parser.add_argument("--seed", type=int, help="Random seed for reproducibility (required if using --random)")
 parser.add_argument("--vcf", action="store_true", help="Write VCF output")
 parser.add_argument("--tree", action="store_true", help="Write .trees output")
@@ -28,12 +33,32 @@ parser.add_argument("--norecap", action="store_true",
 
 args = parser.parse_args()
 
+
+
+# --- Helper: simplify and subsample a ts ---
+def simplify_and_subsample(ts, sample_size):
+    a_seed = random.randint(0, 2**31 - 1)
+    print(f"Generated random seed for sample: {a_seed}")
+    np.random.seed(a_seed)
+
+    num_inds = ts.num_individuals
+    inds = np.random.choice(num_inds, sample_size // 2, replace=False)
+
+    samples = []
+    for i in inds:
+        samples.extend(ts.individual(i).nodes)
+    subsample_nodes = np.sort(np.array(samples))
+    ts = ts.simplify(subsample_nodes, keep_unary=True)
+
+
 source_file = args.source
 ts = tskit.load(source_file)
 
 
+
 r_seed = random.randint(0, 2**31 - 1)
 print(f"Generated random seed for recap: {r_seed}")
+
 
 # Recapitate the tree sequence
 if not args.norecap:
@@ -43,6 +68,37 @@ else:
     print("Skipping recapitation as --norecap is set.")
 
 
+# Counter for individuals by population ID
+pop_counts = collections.Counter()
+for ind in ts.individuals():
+    pop_counts[ind.population] += 1
+
+# # Print names and sizes
+# print("Populations and their sizes:")
+# for pop_id, count in pop_counts.items():
+#     pop_metadata = ts.population(pop_id).metadata
+#     pop_name = pop_metadata.get("name", f"pop_{pop_id}")
+#     print(f"{pop_name} (ID: {pop_id}): {count} individuals") #pop_name=p1/p2, pop_id=1/2
+
+# Get individuals for each population
+pop1_id = [pop_id for pop_id in pop_counts if ts.population(pop_id).metadata.get("name") == "p1"]
+pop2_id = [pop_id for pop_id in pop_counts if ts.population(pop_id).metadata.get("name") == "p2"]
+
+# Get sample nodes for individuals in p1 and p2
+samples_p1 = []
+samples_p2 = []
+
+for ind in ts.individuals():
+    if ind.population in pop1_id:
+        samples_p1.extend(ind.nodes)
+    elif ind.population in pop2_id:
+        samples_p2.extend(ind.nodes)
+
+# Simplify and write VCF for p1
+ts_p1 = ts.simplify(samples=samples_p1, keep_unary=True)
+ts_p2 = ts.simplify(samples=samples_p2, keep_unary=True)
+
+
 if args.random:
     # if args.sample_size is None or args.seed is None:
     #     raise ValueError("--sample_size and --seed are required when using --random")
@@ -50,20 +106,14 @@ if args.random:
     if args.sample_size is None:
         raise ValueError("--sample_size required when using --random")
 
+    if args.sample_size_p2 is None:
+        raise ValueError("--sample_size_p2 required when using --random")
 
-    a_seed = random.randint(0, 2**31 - 1)
-    print(f"Generated random seed for sample: {a_seed}")
-    np.random.seed(a_seed)
+    # Subsample and write p1 VCF
+    ts_p1 = simplify_and_subsample(ts_p1, args.sample_size)
+    ts_p2 = simplify_and_subsample(ts_p2, args.sample_size_p2)
 
-    num_inds = ts.num_individuals
-    inds = np.random.choice(num_inds, args.sample_size // 2, replace=False)
 
-    samples = []
-    for i in inds:
-        samples.extend(ts.individual(i).nodes)
-
-    subsample_nodes = np.sort(np.array(samples))
-    ts = ts.simplify(subsample_nodes)
 
 # Mutation overlay section
 # Prepare to overlay new mutations on the tree sequence using SLiM-compatible format.
@@ -119,7 +169,7 @@ if args.vcf:
     vcf_ts = pyslim.convert_alleles(vcf_ts)
 
     # Collect sample nodes by population
-    nodes_by_pop = {0: [], 1: []}  # Assuming p1=0, p2=1
+    nodes_by_pop = {1: [], 2: []}  # Assuming p1=0, p2=1
     for node in vcf_ts.samples():
         ind_id = vcf_ts.node(node).individual
         if ind_id != tskit.NULL:
@@ -132,7 +182,7 @@ if args.vcf:
             print(f"No samples found for population {pop_id}, skipping.")
             continue
 
-        pop_name = f"p{pop_id+1}"  # SLiM: p1 = pop 0, p2 = pop 1
+        pop_name = f"p{pop_id}"  # SLiM: p1 = pop 1, p2 = pop 2
         vcf_filename = f"{output_prefix}_{pop_name}.vcf"
         print(f"Writing VCF for {pop_name} to {vcf_filename}")
 
