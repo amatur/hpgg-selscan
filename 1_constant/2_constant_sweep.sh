@@ -1,6 +1,5 @@
-
 #!/bin/bash
-#SBATCH --job-name=1_constant_sweep       # Job name
+#SBATCH --job-name=2_constant_sweep       # Job name
 #SBATCH --output=%x.out        # Output file (%j will be replaced with the job ID)
 #SBATCH --error=%x.err          # Error file (%j will be replaced with the job ID)
 #SBATCH --ntasks=1                    # Number of tasks (processes)
@@ -20,5 +19,5 @@ conda activate test-slim
 
 echo "Starting job at $(date)"  # Print the current date
 mkdir -p ../output/1_2_constant_sweep
-slim 1_constant_sweep.slim
+slim 2_constant_sweep.slim
 echo "Ending job at $(date)" 
