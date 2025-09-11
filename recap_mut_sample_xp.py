@@ -50,8 +50,8 @@ def simplify_and_subsample(ts, sample_size):
     for i in inds:
         samples.extend(ts.individual(i).nodes)
     subsample_nodes = np.sort(np.array(samples))
-    ts = ts.simplify(subsample_nodes, keep_unary=True)
-
+    ts = ts.simplify(subsample_nodes, keep_unary=True, filter_sites=False)
+    return ts
 
 source_file = args.source
 ts = tskit.load(source_file)
@@ -114,9 +114,9 @@ for ind in ts.individuals():
         samples_p2.extend(ind.nodes)
 
 # Simplify and write VCF for p1
-if DO_SIMPLIFY:
-    ts_p1 = ts.simplify(samples=samples_p1, keep_unary=True)
-    ts_p2 = ts.simplify(samples=samples_p2, keep_unary=True)
+
+ts_p1 = ts.simplify(samples=samples_p1, keep_unary=True,   filter_sites=False)
+ts_p2 = ts.simplify(samples=samples_p2, keep_unary=True,  filter_sites=False)
 
 
 if args.random:
@@ -207,21 +207,17 @@ if args.vcf:
         print(f"Writing VCF for {pop_name} to {vcf_filename}")
 
         with open(vcf_filename, "w") as vcf_file:
-            sub_ts = vcf_ts.simplify(samples=nodes)
+            sub_ts = vcf_ts.simplify(samples=nodes,  filter_sites=False)
+            sub_ts = simplify_and_subsample(sub_ts, args.sample_size if pop_id == 1 else args.sample_size_p2)
 
-            SAMPLE_SIZE = args.sample_size if pop_id == 1 else args.sample_size_p2
-            # random subset
-            chosen_inds = np.random.choice( list(range(sub_ts.num_individuals)), size=SAMPLE_SIZE, replace=False)
-            ind_names = [f"{pop_name}_ind{i}" for i in chosen_inds]
+            #ind_names = [f"{pop_name}_ind{i}" for i in range(sub_ts.num_individuals)]
 
-            ### to include all -> ind_names = [f"{pop_name}_ind{i}" for i in range(sub_ts.num_individuals)]
 
             sub_ts.write_vcf(
                 vcf_file,
-                individual_names=ind_names,
+                #individual_names=ind_names,
                 isolated_as_missing=False,
-                position_transform=lambda x: np.fmax(1, x),
-                allow_monomorphic=True
+                position_transform=lambda x: np.fmax(1, x)
             )
 
     print("VCF files written for all subpopulations.")
