@@ -35,10 +35,24 @@ ts = tskit.load(source_file)
 r_seed = random.randint(0, 2**31 - 1)
 print(f"Generated random seed for recap: {r_seed}")
 
+
+# demography = msprime.Demography()
+# # ancestral population
+# demography.add_population(name="pop_0", initial_size=10000)
+# # split populations
+# demography.add_population(name="p1", initial_size=10000)
+# demography.add_population(name="p2", initial_size=10000)
+# demography.add_population_split(time=500, derived=["p1", "p2"], ancestral="pop_0")
+
+
 # Recapitate the tree sequence
 if not args.norecap:
     ts = pyslim.recapitate(ts, recombination_rate=args.recomb, ancestral_Ne=args.ne, random_seed=args.seed if args.seed is not None else r_seed)
     print("Recapitation completed.")
+    # ts = msprime.sim_ancestry(
+    # recombination_rate=args.recomb,
+    # sequence_length=ts.sequence_length,
+    # initial_state=ts, demography=demography)
 else:
     print("Skipping recapitation as --norecap is set.")
 

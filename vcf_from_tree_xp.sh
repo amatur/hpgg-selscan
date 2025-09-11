@@ -28,6 +28,7 @@ fi
 TREE_FILE=$1   # SLiM-generated .trees file
 SCRIPT_RECAP_MUT_SAMPLE="recap_mut_sample_xp.py"
 SELSCAN="/storage/home/aur1111/s/transfer/selscan-bugfix/selscan/src/selscan"
+SELSCAN="/Users/amatur/code/selscan_bug/src/selscan"
 #SELSCAN="/storage/home/aur1111/s/transfer/selscan/src/selscan"
 NE=10000
 RECOMB_RATE=1e-8
@@ -41,8 +42,16 @@ DIR=$(realpath "$(dirname "$TREE_FILE")")
 BASENAME=$(basename "$TREE_FILE" .trees)
 DEST_PREFIX="${DIR}/${BASENAME}.recap"
 RECAP_TREE="${DEST_PREFIX}.trees"
+
+
 VCF="${DEST_PREFIX}.vcf"
-BIALLELIC_VCF="${DIR}/${BASENAME}.biallelic.vcf"
+
+VCF1="${DEST_PREFIX}_p1.vcf"
+VCF2="${DEST_PREFIX}_p2.vcf"
+
+BIALLELIC_VCF1="${DIR}/${BASENAME}_p1.biallelic.vcf"
+BIALLELIC_VCF2="${DIR}/${BASENAME}_p2.biallelic.vcf"
+
 LOG="${DEST_PREFIX}.log"
 
 # ======= Step 1: Recapitate + Mutate + Sample =======
@@ -56,5 +65,31 @@ python "$SCRIPT_RECAP_MUT_SAMPLE" \
     --sample_size "$D_SAMP" \
     --sample_size_p2 "$D_SAMP" \
     --random \
-    --vcf --norecap \
+    --vcf \
     --tree 
+
+# ======= Step 2: Filter for biallelic SNPs =======
+TMP_OUT="${DIR}/${BASENAME}_tmp"
+vcftools --vcf "$VCF1" \
+         --min-alleles 2 --max-alleles 2 \
+         --recode --out "$TMP_OUT"
+mv "${TMP_OUT}.recode.vcf" "$BIALLELIC_VCF1"
+
+vcftools --vcf "$VCF2" \
+         --min-alleles 2 --max-alleles 2 \
+         --recode --out "$TMP_OUT"
+mv "${TMP_OUT}.recode.vcf" "$BIALLELIC_VCF2"
+
+# ======= Step 3: Run selscan =======
+$SELSCAN \
+    --vcf "$BIALLELIC_VCF1" \
+    --out "${DIR}/${BASENAME}_p1" \
+    --ihs --nsl --pmap  \
+    --trunc-ok
+
+
+$SELSCAN \
+    --vcf "$BIALLELIC_VCF2" \
+    --out "${DIR}/${BASENAME}_p2" \
+    --ihs --nsl --pmap  \
+    --trunc-ok

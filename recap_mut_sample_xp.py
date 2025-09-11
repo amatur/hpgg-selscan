@@ -10,7 +10,7 @@ import random
 
 
 
-
+DO_SIMPLIFY = False
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--source", type=str, help="Path to the input .trees file (including .trees extension)")
@@ -42,6 +42,8 @@ def simplify_and_subsample(ts, sample_size):
     np.random.seed(a_seed)
 
     num_inds = ts.num_individuals
+    print(f"Number of individuals in the population: {num_inds}")
+    print(f"Requested sample size: {sample_size}")
     inds = np.random.choice(num_inds, sample_size // 2, replace=False)
 
     samples = []
@@ -60,10 +62,27 @@ r_seed = random.randint(0, 2**31 - 1)
 print(f"Generated random seed for recap: {r_seed}")
 
 
+demography = msprime.Demography()
+# ancestral population
+demography.add_population(name="pop_0", initial_size=10000)
+# split populations
+demography.add_population(name="p1", initial_size=10000)
+demography.add_population(name="p2", initial_size=10000)
+demography.add_population_split(time=500, derived=["p1", "p2"], ancestral="pop_0")
+
+
+
+
 # Recapitate the tree sequence
 if not args.norecap:
-    ts = pyslim.recapitate(ts, recombination_rate=args.recomb, ancestral_Ne=args.ne, random_seed=args.seed if args.seed is not None else r_seed)
-    print("Recapitation completed.")
+    #ts = pyslim.recapitate(ts, recombination_rate=args.recomb, ancestral_Ne=args.ne, random_seed=args.seed if args.seed is not None else r_seed)
+    #print("Recapitation completed.")
+
+    ts = msprime.sim_ancestry(
+    recombination_rate=args.recomb,
+    sequence_length=ts.sequence_length,
+    initial_state=ts, demography=demography)
+
 else:
     print("Skipping recapitation as --norecap is set.")
 
@@ -75,10 +94,10 @@ for ind in ts.individuals():
 
 # # Print names and sizes
 # print("Populations and their sizes:")
-# for pop_id, count in pop_counts.items():
-#     pop_metadata = ts.population(pop_id).metadata
-#     pop_name = pop_metadata.get("name", f"pop_{pop_id}")
-#     print(f"{pop_name} (ID: {pop_id}): {count} individuals") #pop_name=p1/p2, pop_id=1/2
+for pop_id, count in pop_counts.items():
+    pop_metadata = ts.population(pop_id).metadata
+    pop_name = pop_metadata.get("name", f"pop_{pop_id}")
+    print(f"{pop_name} (ID: {pop_id}): {count} individuals") #pop_name=p1/p2, pop_id=1/2
 
 # Get individuals for each population
 pop1_id = [pop_id for pop_id in pop_counts if ts.population(pop_id).metadata.get("name") == "p1"]
@@ -95,8 +114,9 @@ for ind in ts.individuals():
         samples_p2.extend(ind.nodes)
 
 # Simplify and write VCF for p1
-ts_p1 = ts.simplify(samples=samples_p1, keep_unary=True)
-ts_p2 = ts.simplify(samples=samples_p2, keep_unary=True)
+if DO_SIMPLIFY:
+    ts_p1 = ts.simplify(samples=samples_p1, keep_unary=True)
+    ts_p2 = ts.simplify(samples=samples_p2, keep_unary=True)
 
 
 if args.random:
@@ -188,12 +208,20 @@ if args.vcf:
 
         with open(vcf_filename, "w") as vcf_file:
             sub_ts = vcf_ts.simplify(samples=nodes)
-            ind_names = [f"{pop_name}_ind{i}" for i in range(sub_ts.num_individuals)]
+
+            SAMPLE_SIZE = args.sample_size if pop_id == 1 else args.sample_size_p2
+            # random subset
+            chosen_inds = np.random.choice( list(range(sub_ts.num_individuals)), size=SAMPLE_SIZE, replace=False)
+            ind_names = [f"{pop_name}_ind{i}" for i in chosen_inds]
+
+            ### to include all -> ind_names = [f"{pop_name}_ind{i}" for i in range(sub_ts.num_individuals)]
+
             sub_ts.write_vcf(
                 vcf_file,
                 individual_names=ind_names,
                 isolated_as_missing=False,
                 position_transform=lambda x: np.fmax(1, x),
+                allow_monomorphic=True
             )
 
     print("VCF files written for all subpopulations.")
