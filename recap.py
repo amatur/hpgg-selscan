@@ -6,6 +6,7 @@ import random
 import sys
 import collections
 
+# A helper function to randomly subset individuals from each pop in the two population models.
 def simplify_and_subsample(ts, sample_size):
     a_seed = random.randint(0, 2**31 - 1)
     print(f"Generated random seed for sample: {a_seed}")
@@ -23,19 +24,28 @@ def simplify_and_subsample(ts, sample_size):
     ts = ts.simplify(subsample_nodes, keep_unary=True, filter_sites=False)
     return ts
 
+# 1/2 number of populations in our model.
 numPops = int(sys.argv[1])
+
+# The .trees file produced from SLiM.
 inFile = sys.argv[2]
+
+# The output prefix for our VCF files.
 output_prefix = sys.argv[3]
 
+# Load .trees from SLiM
 ts = tskit.load(inFile)
 
 r_seed = random.randint(0, 2**31 - 1)
 
+# Single population model.
 if numPops == 1:
+    # Recapitate
     ts = pyslim.recapitate(ts, recombination_rate=1e-8, ancestral_Ne=10000, random_seed=r_seed)
     a_seed = random.randint(0, 2**31 - 1)
     np.random.seed(a_seed)
     num_inds = ts.num_individuals
+    # Sample 50 diploids.
     inds = np.random.choice(num_inds, 50, replace=False)
     samples = []
     for i in inds:
@@ -43,18 +53,21 @@ if numPops == 1:
     subsample_nodes = np.sort(np.array(samples))
     ts = ts.simplify(subsample_nodes)
     next_id = pyslim.next_slim_mutation_id(ts)
+    # Overlay mutations.
     ts = msprime.sim_mutations(
         ts,
         rate=1.29e-8,
         model=msprime.SLiMMutationModel(type=0, next_id=next_id),
         keep=True
     )
+    # Output VCF.
     vcf_ts = pyslim.generate_nucleotides(ts)
     vcf_ts = pyslim.convert_alleles(vcf_ts)
     inds = np.unique([ts.node(i).individual for i in ts.samples()])
     indv_names = [f"tsk_{i}indv" for i in range(len(inds))]
     with open(output_prefix + ".vcf", "w") as vcf_file:
         vcf_ts.write_vcf(vcf_file, individual_names=indv_names, isolated_as_missing=False, position_transform=lambda x: np.fmax(1, x))
+# Two population model.
 elif numPops == 2:
     demography = msprime.Demography()
     # ancestral population
@@ -64,6 +77,7 @@ elif numPops == 2:
     demography.add_population(name="p2", initial_size=10000)
     demography.add_population_split(time=1500, derived=["p1", "p2"], ancestral="pop_0")
 
+    # Simulate ancestry for two populations.
     ts = msprime.sim_ancestry(
         recombination_rate=1e-8,
         sequence_length=ts.sequence_length,
@@ -97,10 +111,11 @@ elif numPops == 2:
         elif ind.population in pop2_id:
             samples_p2.extend(ind.nodes)
 
-    # Simplify and write VCF for p1
+    # Sample 50 individuals from each population.
     ts_p1 = ts.simplify(samples=samples_p1, keep_unary=True,   filter_sites=False)
     ts_p2 = ts.simplify(samples=samples_p2, keep_unary=True,  filter_sites=False)
 
+    # Overlay mutations.
     next_id = pyslim.next_slim_mutation_id(ts)
     ts = msprime.sim_mutations(
         ts,
@@ -125,6 +140,7 @@ elif numPops == 2:
             if pop_id in nodes_by_pop:
                 nodes_by_pop[pop_id].append(node)
 
+    # Write a VCF for each population.
     for pop_id, nodes in nodes_by_pop.items():
         if not nodes:
             print(f"No samples found for population {pop_id}, skipping.")
