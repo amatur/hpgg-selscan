@@ -1,5 +1,14 @@
 #!/bin/bash
 
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --mem=8GB
+#SBATCH --time=5:00:00
+#SBATCH --account=zps5164_sc_default
+#SBATCH --mail-user=tqs5778@psu.edu
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=END
+
 set -uex
 
 # Generate our neutral reps.
@@ -24,5 +33,8 @@ mv "sweep/tmp.recode.vcf" "sweep/p1.vcf"
 selscan --vcf "sweep/p1.vcf" --out "sweep/singlePopBGS" --ihs --nsl --pmap --trunc-ok
 
 # Normalize w.r.t. neutral sims.
-selscan norm --ihs --files neutralRep*/singlePopBGS.ihs.out sweep/singlePopBGS.ihs.out --bins 100
-selscan norm --nsl --files neutralRep*/singlePopBGS.nsl.out sweep/singlePopBGS.nsl.out --bins 100
+norm --ihs --files neutralRep*/singlePopBGS.ihs.out sweep/singlePopBGS.ihs.out --bins 100
+norm --nsl --files neutralRep*/singlePopBGS.nsl.out sweep/singlePopBGS.nsl.out --bins 100
+
+# Clean up
+find "." -type f | egrep "log|trees|txt" | rm

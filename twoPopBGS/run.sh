@@ -1,5 +1,14 @@
 #!/bin/bash
 
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --mem=8GB
+#SBATCH --time=5:00:00
+#SBATCH --account=zps5164_sc_default
+#SBATCH --mail-user=tqs5778@psu.edu
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=END
+
 set -uex
 
 # Generate our neutral reps.
@@ -20,7 +29,7 @@ done
 mkdir sweep
 slim -d s=0.01 -d out=\"./sweep/\" sim.slim
 tree=$(ls sweep/*_final.trees | grep -E '[0-9]+' | sort -t_ -k2,2n | tail -n 1)
-python3 ../recap.py 1 "${tree}" "./sweep/twoPopBGS"
+python3 ../recap.py 2 "${tree}" "./sweep/twoPopBGS"
 vcftools --vcf "./sweep/twoPopBGS_p1.vcf" --min-alleles 2 --max-alleles 2 --recode --out "sweep/tmp"
 mv "sweep/tmp.recode.vcf" "sweep/p1.vcf"
 vcftools --vcf "./sweep/twoPopBGS_p2.vcf" --min-alleles 2 --max-alleles 2 --recode --out "sweep/tmp"
@@ -28,5 +37,8 @@ mv "sweep/tmp.recode.vcf" "sweep/p2.vcf"
 selscan --vcf "sweep/p1.vcf" --vcf-ref "sweep/p2.vcf" --out "sweep/twoPopBGS" --ihs --nsl --pmap --trunc-ok
 
 # Normalize w.r.t. neutral sims.
-selscan norm --xpehh --files neutralRep*/twoPopBGS.xpehh.out sweep/twoPopBGS.xpehh.out --bins 100
-selscan norm --xpnsl --files neutralRep*/twoPopBGS.xpnsl.out sweep/twoPopBGS.xpnsl.out --bins 100
+norm --xpehh --files neutralRep*/twoPopBGS.xpehh.out sweep/twoPopBGS.xpehh.out --bins 100
+norm --xpnsl --files neutralRep*/twoPopBGS.xpnsl.out sweep/twoPopBGS.xpnsl.out --bins 100
+
+# Clean up
+find "." -type f | egrep "log|trees|txt" | rm
