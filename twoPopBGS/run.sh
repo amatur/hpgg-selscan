@@ -23,6 +23,7 @@ do
     vcftools --vcf "./neutralRep${i}/twoPopBGS_p2.vcf" --min-alleles 2 --max-alleles 2 --recode --out "neutralRep${i}/tmp"
     mv "neutralRep${i}/tmp.recode.vcf" "neutralRep${i}/p2.vcf"
     selscan --vcf "neutralRep${i}/p1.vcf" --vcf-ref "neutralRep${i}/p2.vcf" --out "neutralRep${i}/twoPopBGS" --xpehh --xpnsl --pmap  --trunc-ok
+    selscan --vcf "neutralRep${i}/p1.vcf" --vcf-ref "neutralRep${i}/p2.vcf" --out "neutralRep${i}/twoPopBGS.unphased" --unphased --xpehh --xpnsl --pmap  --trunc-ok
 done
 
 # Our non-neutral replicate.
@@ -34,11 +35,16 @@ vcftools --vcf "./sweep/twoPopBGS_p1.vcf" --min-alleles 2 --max-alleles 2 --reco
 mv "sweep/tmp.recode.vcf" "sweep/p1.vcf"
 vcftools --vcf "./sweep/twoPopBGS_p2.vcf" --min-alleles 2 --max-alleles 2 --recode --out "sweep/tmp"
 mv "sweep/tmp.recode.vcf" "sweep/p2.vcf"
-selscan --vcf "sweep/p1.vcf" --vcf-ref "sweep/p2.vcf" --out "sweep/twoPopBGS" --ihs --nsl --pmap --trunc-ok
+selscan --vcf "sweep/p1.vcf" --vcf-ref "sweep/p2.vcf" --out "sweep/twoPopBGS" --xpehh --xpnsl --pmap --trunc-ok
+selscan --vcf "sweep/p1.vcf" --vcf-ref "sweep/p2.vcf" --out "sweep/twoPopBGS.unphased" --unphased --xpehh --xpnsl --pmap --trunc-ok
+
 
 # Normalize w.r.t. neutral sims.
 norm --xpehh --files neutralRep*/twoPopBGS.xpehh.out sweep/twoPopBGS.xpehh.out --bins 100
 norm --xpnsl --files neutralRep*/twoPopBGS.xpnsl.out sweep/twoPopBGS.xpnsl.out --bins 100
+norm --xpehh --files neutralRep*/twoPopBGS.unphased.xpehh.out sweep/twoPopBGS.unphased.xpehh.out --bins 100
+norm --xpnsl --files neutralRep*/twoPopBGS.unphased.xpnsl.out sweep/twoPopBGS.unphased.xpnsl.out --bins 100
+
 
 # Clean up
 find "." -type f | egrep "log|trees|txt" | rm

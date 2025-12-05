@@ -21,6 +21,7 @@ do
     vcftools --vcf "./neutralRep${i}/singlePopBGS.vcf" --min-alleles 2 --max-alleles 2 --recode --out "neutralRep${i}/tmp"
     mv "neutralRep${i}/tmp.recode.vcf" "neutralRep${i}/p1.vcf"
     selscan --vcf "neutralRep${i}/p1.vcf" --out "neutralRep${i}/singlePopBGS" --ihs --nsl --pmap  --trunc-ok
+    selscan --vcf "neutralRep${i}/p1.vcf" --out "neutralRep${i}/singlePopBGS.unphased" --unphased --ihs --nsl --pmap  --trunc-ok
 done
 
 # Our non-neutral replicate.
@@ -31,10 +32,13 @@ python3 ../recap.py 1 "${tree}" "./sweep/singlePopBGS"
 vcftools --vcf "./sweep/singlePopBGS.vcf" --min-alleles 2 --max-alleles 2 --recode --out "sweep/tmp"
 mv "sweep/tmp.recode.vcf" "sweep/p1.vcf"
 selscan --vcf "sweep/p1.vcf" --out "sweep/singlePopBGS" --ihs --nsl --pmap --trunc-ok
+selscan --vcf "sweep/p1.vcf" --out "sweep/singlePopBGS.unphased" --unphased --ihs --nsl --pmap --trunc-ok
 
 # Normalize w.r.t. neutral sims.
 norm --ihs --files neutralRep*/singlePopBGS.ihs.out sweep/singlePopBGS.ihs.out --bins 100
 norm --nsl --files neutralRep*/singlePopBGS.nsl.out sweep/singlePopBGS.nsl.out --bins 100
+norm --ihs --files neutralRep*/singlePopBGS.unphased.ihs.out sweep/singlePopBGS.unphased.ihs.out --bins 100
+norm --nsl --files neutralRep*/singlePopBGS.unphased.nsl.out sweep/singlePopBGS.unphased.nsl.out --bins 100
 
 # Clean up
 find "." -type f | egrep "log|trees|txt" | rm
