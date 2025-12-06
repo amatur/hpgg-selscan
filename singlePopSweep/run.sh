@@ -20,8 +20,8 @@ do
     python3 ../recap.py 1 "${tree}" "./neutralRep${i}/singlePopSweep"
     vcftools --vcf "./neutralRep${i}/singlePopSweep.vcf" --min-alleles 2 --max-alleles 2 --recode --out "neutralRep${i}/tmp"
     mv "neutralRep${i}/tmp.recode.vcf" "neutralRep${i}/p1.vcf"
-    selscan --vcf "neutralRep${i}/p1.vcf" --out "neutralRep${i}/singlePopSweep" --ihs --nsl --pmap  --trunc-ok
-    selscan --vcf "neutralRep${i}/p1.vcf" --out "neutralRep${i}/singlePopSweep.unphased" --unphased --ihs --nsl --pmap  --trunc-ok
+    ~/bin/selscan --vcf "neutralRep${i}/p1.vcf" --out "neutralRep${i}/singlePopSweep" --ihs --nsl --pmap  --trunc-ok
+    ~/bin/selscan --vcf "neutralRep${i}/p1.vcf" --out "neutralRep${i}/singlePopSweep.unphased" --unphased --ihs --nsl --pmap  --trunc-ok
 done
 
 # Our non-neutral replicate.
@@ -31,14 +31,14 @@ tree=$(ls sweep/*_final.trees | grep -E '[0-9]+' | sort -t_ -k2,2n | tail -n 1)
 python3 ../recap.py 1 "${tree}" "./sweep/singlePopSweep"
 vcftools --vcf "./sweep/singlePopSweep.vcf" --min-alleles 2 --max-alleles 2 --recode --out "sweep/tmp"
 mv "sweep/tmp.recode.vcf" "sweep/p1.vcf"
-selscan --vcf "sweep/p1.vcf" --out "sweep/singlePopSweep" --ihs --nsl --pmap --trunc-ok
-selscan --vcf "sweep/p1.vcf" --out "sweep/singlePopSweep.unphased" --unphased --ihs --nsl --pmap --trunc-ok
+~/bin/selscan --vcf "sweep/p1.vcf" --out "sweep/singlePopSweep" --ihs --nsl --pmap --trunc-ok
+~/bin/selscan --vcf "sweep/p1.vcf" --out "sweep/singlePopSweep.unphased" --unphased --ihs --nsl --pmap --trunc-ok
 
 # Normalize w.r.t. neutral sims.
-norm --ihs --files neutralRep*/singlePopSweep.ihs.out sweep/singlePopSweep.ihs.out --bins 100
-norm --nsl --files neutralRep*/singlePopSweep.nsl.out sweep/singlePopSweep.nsl.out --bins 100
-norm --ihs --files neutralRep*/singlePopSweep.unphased.ihs.out sweep/singlePopSweep.unphased.ihs.out --bins 100
-norm --nsl --files neutralRep*/singlePopSweep.unphased.nsl.out sweep/singlePopSweep.unphased.nsl.out --bins 100
+~/bin/norm --ihs --files neutralRep*/singlePopSweep.ihs.out sweep/singlePopSweep.ihs.out --bins 100
+~/bin/norm --nsl --files neutralRep*/singlePopSweep.nsl.out sweep/singlePopSweep.nsl.out --bins 100
+~/bin/norm --ihs --files neutralRep*/singlePopSweep.unphased.ihs.out sweep/singlePopSweep.unphased.ihs.out --bins 100
+~/bin/norm --nsl --files neutralRep*/singlePopSweep.unphased.nsl.out sweep/singlePopSweep.unphased.nsl.out --bins 100
 
 # Clean up
-find "." -type f | egrep "log|trees|txt" | rm
+find "." -type f | egrep "log|trees|txt" | xargs rm
