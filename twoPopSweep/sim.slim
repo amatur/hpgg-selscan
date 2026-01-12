@@ -17,8 +17,8 @@ initialize() {
     defineConstant("sampleTimes", c(100, 200, 300, 400, 500, 1000, 2000));
     defineConstant("d_ne", 10000);
     defineConstant("DRIFT_GEN", 0);
-    defineConstant("MAX_GEN", 5000);
-    defineConstant("MUT_GEN", 1500);
+    defineConstant("MAX_GEN", 4000);
+    defineConstant("MUT_GEN", 2000);
     defineConstant("SURVIVAL_CHECK_GEN", MUT_GEN + DRIFT_GEN);
     defineConstant("SPLIT_GEN", 500);
     defineConstant("SPLIT_NEUTRAL_POP_SIZE", 10000); // Generation to split population into two (after burn-in and sweep introduction)
@@ -106,28 +106,39 @@ MUT_GEN late() {
     catn("Output path prefix: " + outputPathPrefix);
     sim.outputFull(outputPathPrefix+"/slim_" + simID + ".txt"); // save the state of the simulation
     cat("Loaded last slim simulation; current generation = " + community.tick + " at attempt " + sim.getValue("attempt")+ "\n");
+    
     introduceSweep();  
 }
 
 
 // Check if mutation survived early drift (by gen 10050)
 SURVIVAL_CHECK_GEN late() {
-    muts = sim.mutationsOfType(m2);
-    afs = sim.mutationFrequencies(p1, muts);
+    if (s!=0) {
+        muts = sim.mutationsOfType(m2);
+        afs = sim.mutationFrequencies(p1, muts);
 
-    if (size(muts) != 1) {
-        cat("Sweep lost before gen " + SURVIVAL_CHECK_GEN + " → restarting\n");
-        
-        reloadSim();
-        introduceSweep();
-    } else {
-        sim.setValue("mutationSurvived", T);
-        cat("Sweep survived drift (AF = " + afs[0] + ") → continuing\n");
+        if (size(muts) != 1) {
+            cat("Sweep lost before gen " + SURVIVAL_CHECK_GEN + " → restarting\n");
+            
+            reloadSim();
+            introduceSweep();
+        } else {
+            sim.setValue("mutationSurvived", T);
+            cat("Sweep survived drift (AF = " + afs[0] + ") → continuing\n");
+        }
     }
 }
 
 // Track allele frequency, sample, detect fixation
 late() {
+
+    if (s == 0 & community.tick == MAX_GEN) {
+        prefix = outputPathPrefix + "gen" + community.tick;
+        sim.treeSeqOutput(prefix + ".trees");
+        cat("Finished at gen " + community.tick + "\n");
+        sim.simulationFinished();
+    }
+
     muts = sim.mutationsOfType(m2);
     afs = sim.mutationFrequencies(p1, muts);
 
@@ -140,7 +151,7 @@ late() {
     if(community.tick >= MUT_GEN)
         cat("Gen " + community.tick + ": AF = " + af + "\n");
 
-    if(af==0.0 & community.tick > MUT_GEN + DRIFT_GEN){
+    if(s != 0 & af==0.0 & community.tick > MUT_GEN + DRIFT_GEN){
         reloadSim();
         introduceSweep(); //re-introduce sweep if lost
     }
