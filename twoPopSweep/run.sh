@@ -2,8 +2,8 @@
 
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --mem=8GB
-#SBATCH --time=5:00:00
+#SBATCH --mem=20GB
+#SBATCH --time=48:00:00
 #SBATCH --account=zps5164_sc_default
 #SBATCH --mail-user=tqs5778@psu.edu
 #SBATCH --mail-type=BEGIN
@@ -31,7 +31,7 @@ do
     selscan --vcf "neutralRep${i}/pp/0002.vcf" --vcf-ref "neutralRep${i}/pp/0003.vcf" --out "neutralRep${i}/twoPopSweep.unphased" --unphased --xpehh --pmap  --trunc-ok
     selscan --vcf "neutralRep${i}/pp/0002.vcf" --vcf-ref "neutralRep${i}/pp/0003.vcf" --out "neutralRep${i}/twoPopSweep" --xpnsl --pmap --trunc-ok
     selscan --vcf "neutralRep${i}/pp/0002.vcf" --vcf-ref "neutralRep${i}/pp/0003.vcf" --out "neutralRep${i}/twoPopSweep.unphased" --unphased --xpnsl --pmap --trunc-ok
-    rm -rf "neutralRep${i}/pp"
+    #rm -rf "neutralRep${i}/pp"
 done
 
 # Our non-neutral replicate.
@@ -52,7 +52,7 @@ selscan --vcf "sweep/pp/0002.vcf" --vcf-ref "sweep/pp/0003.vcf" --out "sweep/two
 selscan --vcf "sweep/pp/0002.vcf" --vcf-ref "sweep/pp/0003.vcf" --out "sweep/twoPopSweep.unphased" --unphased --xpehh --pmap --trunc-ok
 selscan --vcf "sweep/pp/0002.vcf" --vcf-ref "sweep/pp/0003.vcf" --out "sweep/twoPopSweep" --xpnsl --pmap --trunc-ok
 selscan --vcf "sweep/pp/0002.vcf" --vcf-ref "sweep/pp/0003.vcf" --out "sweep/twoPopSweep.unphased" --unphased --xpnsl --pmap --trunc-ok
-rm -rf "sweep/pp"
+#rm -rf "sweep/pp"
 
 # Normalize w.r.t. neutral sims.
 selscan norm --xpehh --files neutralRep*/twoPopSweep.xpehh.out sweep/twoPopSweep.xpehh.out
@@ -62,3 +62,4 @@ selscan norm --xpnsl --files neutralRep*/twoPopSweep.unphased.xpnsl.out sweep/tw
 
 # Clean up
 #find "." -type f | egrep "log|trees|txt" | xargs rm
+

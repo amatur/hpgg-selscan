@@ -7,8 +7,8 @@ initialize() {
     initializeTreeSeq();
 
     defineConstant("d_sel", s); // Selection coefficient for the sweep
-    defineConstant("d_mloc", 500000); // Location of the beneficial mutation 5 MB
-    defineConstant("d_chr", 1000000); // Chromosome length 10 MB
+    defineConstant("d_mloc", 5000000); // Location of the beneficial mutation 5 MB
+    defineConstant("d_chr", 10000000); // Chromosome length 10 MB
     defineConstant("d_rr", 1e-8); // Recombination rate
     defineConstant("d_hapsel", 1); // Number of haplotypes to select for the sweep
     defineConstant("outputPathPrefix", out);
@@ -95,17 +95,19 @@ function (void) reloadSim(void){
 
 // Check if mutation survived early drift (by gen 10050)
 SURVIVAL_CHECK_GEN late() {
-    muts = sim.mutationsOfType(m2);
-    afs = sim.mutationFrequencies(NULL, muts);
+    if (s != 0) {
+        muts = sim.mutationsOfType(m2);
+        afs = sim.mutationFrequencies(NULL, muts);
 
-    if (size(muts) != 1) {
-        cat("Sweep lost before gen " + SURVIVAL_CHECK_GEN + " → restarting\n");
-        
-        reloadSim();
-        introduceSweep();
-    } else {
-        sim.setValue("mutationSurvived", T);
-        cat("Sweep survived drift (AF = " + afs[0] + ") → continuing\n");
+        if (size(muts) != 1) {
+            cat("Sweep lost before gen " + SURVIVAL_CHECK_GEN + " → restarting\n");
+            
+            reloadSim();
+            introduceSweep();
+        } else {
+            sim.setValue("mutationSurvived", T);
+            cat("Sweep survived drift (AF = " + afs[0] + ") → continuing\n");
+        }
     }
 }
 
@@ -120,7 +122,7 @@ late() {
         af = 0.0; // If mutation not found, set AF to 0
     }
 
-    if(af==0.0 & community.tick > MUT_GEN + DRIFT_GEN){
+    if(s != 0 & af==0.0 & community.tick > MUT_GEN + DRIFT_GEN){
         reloadSim();
         introduceSweep(); //re-introduce sweep if lost
     }
@@ -162,6 +164,8 @@ late() {
 
 
     if (community.tick == MAX_GEN) {
+        prefix = outputPathPrefix + "gen" + community.tick;
+        sim.treeSeqOutput(prefix + ".trees");
         cat("Finished at gen " + community.tick + "\n");
         sim.simulationFinished();
     }

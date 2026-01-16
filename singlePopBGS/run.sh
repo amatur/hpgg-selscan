@@ -16,29 +16,35 @@ for i in {1..100}
 do 
     mkdir -p "neutralRep${i}"
     slim -d s=0 -d out=\"./neutralRep${i}/\" sim.slim
-    tree="neutralRep${i}/gen1000.trees"
+    tree="neutralRep${i}/gen2000.trees"
     python3 ../recap.py 1 "${tree}" "./neutralRep${i}/singlePopBGS"
     vcftools --vcf "./neutralRep${i}/singlePopBGS.vcf" --min-alleles 2 --max-alleles 2 --recode --out "neutralRep${i}/tmp"
     mv "neutralRep${i}/tmp.recode.vcf" "neutralRep${i}/p1.vcf"
-    ~/bin/selscan --vcf "neutralRep${i}/p1.vcf" --out "neutralRep${i}/singlePopBGS" --ihs --nsl --pmap  --trunc-ok
-    ~/bin/selscan --vcf "neutralRep${i}/p1.vcf" --out "neutralRep${i}/singlePopBGS.unphased" --unphased --ihs --nsl --pmap  --trunc-ok
+    selscan --vcf "neutralRep${i}/p1.vcf" --out "neutralRep${i}/singlePopBGS" --ihs --nsl --pmap  --trunc-ok
+    selscan --vcf "neutralRep${i}/p1.vcf" --out "neutralRep${i}/singlePopBGS.unphased" --unphased --ihs --nsl --pmap  --trunc-ok
+    selscan --vcf "neutralRep${i}/p1.vcf" --out "neutralRep${i}/singlePopBGS" --ihh12 --pmap  --trunc-ok
 done
 
 # Our non-neutral replicate.
 mkdir sweep
-slim -d s=0.01 -d out=\"./sweep/\" sim.slim
+slim -d s=0.1 -d out=\"./sweep/\" sim.slim
 tree=$(ls sweep/*_final.trees | grep -E '[0-9]+' | sort -t_ -k2,2n | tail -n 1)
 python3 ../recap.py 1 "${tree}" "./sweep/singlePopBGS"
 vcftools --vcf "./sweep/singlePopBGS.vcf" --min-alleles 2 --max-alleles 2 --recode --out "sweep/tmp"
 mv "sweep/tmp.recode.vcf" "sweep/p1.vcf"
-~/bin/selscan --vcf "sweep/p1.vcf" --out "sweep/singlePopBGS" --ihs --nsl --pmap --trunc-ok
-~/bin/selscan --vcf "sweep/p1.vcf" --out "sweep/singlePopBGS.unphased" --unphased --ihs --nsl --pmap --trunc-ok
+selscan --vcf "sweep/p1.vcf" --out "sweep/singlePopBGS" --ihs --nsl --pmap --trunc-ok
+selscan --vcf "sweep/p1.vcf" --out "sweep/singlePopBGS.unphased" --unphased --ihs --nsl --pmap --trunc-ok
+selscan --vcf "sweep/p1.vcf" --out "sweep/singlePopBGS" --ihh12 --pmap --trunc-ok
 
 # Normalize w.r.t. neutral sims.
-~/bin/norm --ihs --files neutralRep*/singlePopBGS.ihs.out sweep/singlePopBGS.ihs.out --bins 100
-~/bin/norm --nsl --files neutralRep*/singlePopBGS.nsl.out sweep/singlePopBGS.nsl.out --bins 100
-~/bin/norm --ihs --files neutralRep*/singlePopBGS.unphased.ihs.out sweep/singlePopBGS.unphased.ihs.out --bins 100
-~/bin/norm --nsl --files neutralRep*/singlePopBGS.unphased.nsl.out sweep/singlePopBGS.unphased.nsl.out --bins 100
+selscan norm --ihs --files neutralRep*/singlePopBGS.ihs.out sweep/singlePopBGS.ihs.out --bins 100
+selscan norm --nsl --files neutralRep*/singlePopBGS.nsl.out sweep/singlePopBGS.nsl.out --bins 100
+selscan norm --ihs --files neutralRep*/singlePopBGS.unphased.ihs.out sweep/singlePopBGS.unphased.ihs.out --bins 100
+selscan norm --nsl --files neutralRep*/singlePopBGS.unphased.nsl.out sweep/singlePopBGS.unphased.nsl.out --bins 100
+selscan norm --ihh12 --files neutralRep*/singlePopBGS.ihh12.out sweep/singlePopBGS.ihh12.out
 
 # Clean up
-find "." -type f | egrep "log|trees|txt" | xargs rm
+#find "." -type f | egrep "log|trees|txt" | xargs rm
+
+selscan --ehh 503623 --vcf neutralRep1/p1.vcf --pmap --out neutral
+selscan --ehh 500000 --vcf sweep/p1.vcf --pmap --out sweep

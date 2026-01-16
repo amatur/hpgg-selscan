@@ -71,17 +71,24 @@ if numPops == 1:
 elif numPops == 2:
     demography = msprime.Demography()
     # ancestral population
-    demography.add_population(name="pop_0", initial_size=10000)
-    # split populations
-    demography.add_population(name="p1", initial_size=10000)
-    demography.add_population(name="p2", initial_size=10000)
-    demography.add_population_split(time=1500, derived=["p1", "p2"], ancestral="pop_0")
+    if 'neutral' in inFile:
+        demography.add_population(name="p0", initial_size=10000)
+        # split populations
+        demography.add_population(name="p1", initial_size=10000)
+        demography.add_population(name="p2", initial_size=10000)
+        demography.add_population_split(time=1500, derived=["p1", "p2"], ancestral="p0")
+    else:
+        demography.add_population(name="pop_0", initial_size=10000)
+        # split populations
+        demography.add_population(name="p1", initial_size=10000)
+        demography.add_population(name="p2", initial_size=10000)
+        demography.add_population_split(time=1500, derived=["p1", "p2"], ancestral="pop_0")
 
     # Simulate ancestry for two populations.
     ts = msprime.sim_ancestry(
         recombination_rate=1e-8,
         sequence_length=ts.sequence_length,
-        initial_state=ts, 
+        initial_state=ts,
         demography=demography
     )
 
@@ -94,7 +101,7 @@ elif numPops == 2:
     # print("Populations and their sizes:")
     for pop_id, count in pop_counts.items():
         pop_metadata = ts.population(pop_id).metadata
-        pop_name = pop_metadata.get("name", f"pop_{pop_id}")
+        pop_name = pop_metadata.get("name", f"p{pop_id}")
         print(f"{pop_name} (ID: {pop_id}): {count} individuals") #pop_name=p1/p2, pop_id=1/2
 
     # Get individuals for each population
