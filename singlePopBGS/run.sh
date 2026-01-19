@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --mem=8GB
-#SBATCH --time=5:00:00
+#SBATCH --ntasks=20
+#SBATCH --mem=100GB
+#SBATCH --time=72:00:00
 #SBATCH --account=zps5164_sc_default
 #SBATCH --mail-user=tqs5778@psu.edu
 #SBATCH --mail-type=BEGIN
@@ -11,13 +11,16 @@
 
 set -uex
 
-# Generate our neutral reps.
+# Create enutral reps.
+mkdir -p neutralReps{1..100}
+for i in {1..100}
+do
+    echo "slim -d s=0 -d out=\"./neutralRep${i}/singlePopBGS\" sim.slim"
+done | parallel -j 20
+
+# Run selscan.
 for i in {1..100}
 do 
-    mkdir -p "neutralRep${i}"
-    slim -d s=0 -d out=\"./neutralRep${i}/\" sim.slim
-    tree="neutralRep${i}/gen2000.trees"
-    python3 ../recap.py 1 "${tree}" "./neutralRep${i}/singlePopBGS"
     vcftools --vcf "./neutralRep${i}/singlePopBGS.vcf" --min-alleles 2 --max-alleles 2 --recode --out "neutralRep${i}/tmp"
     mv "neutralRep${i}/tmp.recode.vcf" "neutralRep${i}/p1.vcf"
     selscan --vcf "neutralRep${i}/p1.vcf" --out "neutralRep${i}/singlePopBGS" --ihs --nsl --pmap  --trunc-ok
@@ -27,9 +30,7 @@ done
 
 # Our non-neutral replicate.
 mkdir sweep
-slim -d s=0.1 -d out=\"./sweep/\" sim.slim
-tree=$(ls sweep/*_final.trees | grep -E '[0-9]+' | sort -t_ -k2,2n | tail -n 1)
-python3 ../recap.py 1 "${tree}" "./sweep/singlePopBGS"
+slim -d s=0.1 -d out=\"./sweep/singlePopBGS\" sim.slim
 vcftools --vcf "./sweep/singlePopBGS.vcf" --min-alleles 2 --max-alleles 2 --recode --out "sweep/tmp"
 mv "sweep/tmp.recode.vcf" "sweep/p1.vcf"
 selscan --vcf "sweep/p1.vcf" --out "sweep/singlePopBGS" --ihs --nsl --pmap --trunc-ok
