@@ -18,22 +18,16 @@ initialize() {
     defineConstant("BURN_IN", 100000);
     defineConstant("SURVIVAL_CHECK_GEN", BURN_IN + MUT_GEN); // Generation to check if sweep survived early drift
 
-    
-    // -- NEUTRAL + BACKGROUND SELECTION PARAMETERS --
+    // -- NEUTRAL + BGS
     initializeMutationType("m1", 0.5, "f", 0.0);             // m1 mutation type: neutral
     initializeMutationType("m2", 0.1, "g", -d_sel, 0.2);     // m2 mutation type: recessive negative selection with gamma distribution of mean 0.1 and shape 0.2
-
-    // g1 genome element type is an intron, 10% of mutations are deleterious
     initializeGenomicElementType("g1", c(m1,m2), c(9,1)); //10% of mutations are deleterious (m2), 90% are neutral (m1)
     initializeGenomicElement(g1, 0, d_chr - 1);   // uniform chromosome of length d_chr in bases
 
-    if (s != 0) {
-        initializeMutationType("m3", 0.5, "f", d_sel); // m3 mutation type: sweep 
-        m3.convertToSubstitution = F;
-        m3.mutationStackPolicy   = "l";
-    } else {
-        initializeMutationType("m3", 0, "f", 0); // m3 mutation type: sweep 
-    }
+    // Sweep
+    initializeMutationType("m3", 0.5, "f", d_sel); // m3 mutation type: sweep 
+    m3.convertToSubstitution = F;
+    m3.mutationStackPolicy   = "l";
 }
 
 1 early(){
@@ -50,18 +44,19 @@ function (void) defineCfgParam(string$ name, lifs value) {
 ////////////////////////////////////////////////////////////////////////////////
 // Generation 1: read burn-in & introduce sweep (still gen 10 000)            //
 ////////////////////////////////////////////////////////////////////////////////
-BURN_IN + MUT_GEN late() {
-    targetGenomes = sample(p1.genomes, d_hapsel);
-    for (genome in targetGenomes) {
-        genome.addNewDrawnMutation(m3, d_mloc);
-    } 
-
-    mut = sim.mutationsOfType(m3);
-    sim.setValue("beneficialMutId", mut.id);    
-}
 
 BURN_IN + MUT_GEN late() {
+
+    // Add sweep.
     if (s != 0) {
+
+        targetGenomes = sample(p1.genomes, d_hapsel);
+        for (genome in targetGenomes) {
+            genome.addNewDrawnMutation(m3, d_mloc);
+        } 
+        mut = sim.mutationsOfType(m3);
+
+        sim.setValue("beneficialMutId", mut.id);    
         sim.setValue("attempt", 0);
         sim.setValue("mutationSurvived", F);
         sim.setValue("hasFixed", F);

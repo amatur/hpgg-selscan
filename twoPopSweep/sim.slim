@@ -19,11 +19,15 @@ initialize() {
     defineConstant("SPLIT_NEUTRAL_POP_SIZE", 10000); // Generation to split population into two (after burn-in and sweep introduction)
     defineConstant("SPLIT_SWEEP_POP_SIZE", 10000); // Generation to split population into two (after burn-in and sweep introduction)
 
-
-    initializeMutationType("m2", 0.5, "f", d_sel);
-    m2.convertToSubstitution = F;
-    m2.mutationStackPolicy = "l";
-    initializeGenomicElementType("g1", m2, 1.0);
+    // Neutral mutation.
+    initializeMutationType("m1", 0.5, "f", 0);
+    
+    if (s != 0) {
+        initializeMutationType("m2", 0.5, "f", d_sel);
+        m2.convertToSubstitution = F;
+        m2.mutationStackPolicy = "l";
+    }
+    initializeGenomicElementType("g1", m1, 1.0);
     initializeGenomicElement(g1, 0, d_chr - 1);
 }
 
@@ -31,7 +35,6 @@ initialize() {
     defineConstant("simID", getSeed());
 
     sim.addSubpop("p0", d_ne);          // ancestral population
-
 
     sim.setValue("attempt", 0);
     sim.setValue("mutationSurvived", F);

@@ -13,10 +13,7 @@ set -uex
 
 # Generate neutral reps.
 mkdir -p neutralRep{1..100}
-for i in {1..100}
-do 
-    echo -e "slim -d s=0 -d 'out=\"./neutralReps%d/twoPopBGS\"' sim.slim"
-done | parallel -j 20
+parallel -j 20 slim -d s=0 -d 'out="./neutralRep{}/twoPopBGS"' sim.slim ::: {1..100}
 
 # Run selscan.
 for i in {1..100}
@@ -39,7 +36,7 @@ done
 
 # Our non-neutral replicate.
 mkdir sweep
-slim -d s=0.1 -d out='./sweep/twoPopBGS' sim.slim
+slim -d s=0.1 -d 'out="./sweep/twoPopBGS"' sim.slim
 vcftools --vcf "./sweep/twoPopBGS_p1.vcf" --min-alleles 2 --max-alleles 2 --recode --out "sweep/tmp"
 mv "sweep/tmp.recode.vcf" "sweep/p1.vcf"
 bgzip "sweep/p1.vcf"

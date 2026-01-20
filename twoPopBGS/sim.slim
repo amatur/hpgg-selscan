@@ -23,20 +23,17 @@ initialize() {
     defineConstant("SPLIT_NEUTRAL_POP_SIZE", 10000); // Generation to split population into two (after burn-in and sweep introduction)
     defineConstant("SPLIT_SWEEP_POP_SIZE", 10000); // Generation to split population into two (after burn-in and sweep introduction)
 
-    // -- NEUTRAL + BACKGROUND SELECTION PARAMETERS --
+    // -- NEUTRAL 
     initializeMutationType("m1", 0.5, "f", 0.0);             // m1 mutation type: neutral
     initializeMutationType("m2", 0.1, "g", -d_sel, 0.2);     // m2 mutation type: recessive negative selection with gamma distribution of mean 0.1 and shape 0.2
     // g1 genome element type is an intron, 10% of mutations are deleterious
     initializeGenomicElementType("g1", c(m1,m2), c(9,1)); //10% of mutations are deleterious (m2), 90% are neutral (m1)
     initializeGenomicElement(g1, 0, d_chr - 1);   // uniform chromosome of length d_chr in bases
 
-    if (s != 0) {
-        initializeMutationType("m3", 0.5, "f", d_sel); // m3 mutation type: sweep 
-        m3.convertToSubstitution = F;
-        m3.mutationStackPolicy   = "l";
-    } else {
-        initializeMutationType("m3", 0, "f", 0);
-    }
+    
+    initializeMutationType("m3", 0.5, "f", d_sel); // m3 mutation type: sweep 
+    m3.convertToSubstitution = F;
+    m3.mutationStackPolicy   = "l";
 
 }
 
@@ -54,7 +51,7 @@ function (void) defineCfgParam(string$ name, lifs value) {
 }
 
 
-SPLIT_GEN early() {
+BURN_IN + SPLIT_GEN early() {
     sim.addSubpopSplit("p1", SPLIT_NEUTRAL_POP_SIZE, p0); //sample d_ne / 2 individuals from p1 into the new p2
     sim.addSubpopSplit("p2", SPLIT_NEUTRAL_POP_SIZE, p0); //sample d_ne / 2 individuals from p1 into the new p2
     p0.setSubpopulationSize(0);
@@ -63,17 +60,18 @@ SPLIT_GEN early() {
 ////////////////////////////////////////////////////////////////////////////////
 // Generation 1: read burn-in & introduce sweep (still gen 10 000)            //
 ////////////////////////////////////////////////////////////////////////////////
-BURN_IN + MUT_GEN late() {
-    targetGenomes = sample(p1.genomes, d_hapsel);
-    for (genome in targetGenomes) {
-        genome.addNewDrawnMutation(m3, d_mloc);
-    }  
-    mut = sim.mutationsOfType(m3)[0];
-    sim.setValue("beneficialMutId", mut.id);    
-}
 
 BURN_IN + MUT_GEN late() {
+
+    // Add sweep.
     if (s != 0) {
+        targetGenomes = sample(p1.genomes, d_hapsel);
+        for (genome in targetGenomes) {
+            genome.addNewDrawnMutation(m3, d_mloc);
+        }  
+        mut = sim.mutationsOfType(m3)[0];
+        sim.setValue("beneficialMutId", mut.id); 
+
         sim.setValue("attempt", 0);
         sim.setValue("mutationSurvived", F);
         sim.setValue("hasFixed", F);
@@ -132,7 +130,7 @@ BURN_IN + SURVIVAL_CHECK_GEN late() {
 // Track allele frequency, sample, detect fixation
 late() {
 
-    if (community.tick > BURN_IN) {
+    if (community.tick > BURN_IN + SPLIT_GEN) {
         muts = sim.mutationsOfType(m3);
         afs = sim.mutationFrequencies(p1, muts);
 
