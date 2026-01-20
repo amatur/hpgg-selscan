@@ -15,13 +15,12 @@ set -uex
 mkdir -p neutralReps{1..100}
 for i in {1..100}
 do 
-    printf "slim -d s=0 -d out=\"./neutralRep%d/singlePopSweep\" sim.slim" "$i"
+    echo -e "slim -d s=0 -d out=\"./neutralRep$i/singlePopSweep\" sim.slim"
 done | parallel -j 20
 
 # Run selscan.
 for i in {1..100}
 do 
-    slim -d s=0 -d out=\"./neutralRep${i}/\" sim.slim
     vcftools --vcf "./neutralRep${i}/singlePopSweep.vcf" --min-alleles 2 --max-alleles 2 --recode --out "neutralRep${i}/tmp"
     mv "neutralRep${i}/tmp.recode.vcf" "neutralRep${i}/p1.vcf"
     selscan --vcf "neutralRep${i}/p1.vcf" --out "neutralRep${i}/singlePopSweep" --ihs --nsl --pmap  --trunc-ok
