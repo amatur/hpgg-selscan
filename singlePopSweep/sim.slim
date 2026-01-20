@@ -22,12 +22,9 @@ initialize() {
 
     // Neutral mutation.
     initializeMutationType("m1", 0.5, "f", 0);
-
-    if (s != 0) {
-        initializeMutationType("m2", 0.5, "f", d_sel);
-        m2.convertToSubstitution = F;
-        m2.mutationStackPolicy   = "l";
-    }
+    initializeMutationType("m2", 0.5, "f", d_sel);
+    m2.convertToSubstitution = F;
+    m2.mutationStackPolicy   = "l";
     initializeGenomicElementType("g1", m1, 1.0);
     initializeGenomicElement(g1, 0, d_chr - 1);
 }

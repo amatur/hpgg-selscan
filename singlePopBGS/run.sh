@@ -12,7 +12,7 @@
 set -uex
 
 # Create enutral reps.
-mkdir -p neutralReps{1..100}
+mkdir -p neutralRep{1..100}
 parallel -j 20 slim -d s=0 -d 'out=\"./neutralRep{}/singlePopBGS\"' sim.slim ::: {1..100}
 
 
