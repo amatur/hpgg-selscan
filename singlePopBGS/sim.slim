@@ -140,7 +140,7 @@ late() {
 
         if (s != 0 & af >= 0.74) {
             cat("Sweep reached 75% at gen " + community.tick + "\n");
-            p1.outputVCFSample(50, filePath=outputPathPrefix + ".vcf")
+            p1.outputVCFSample(50, filePath=outputPathPrefix + ".vcf");
             sim.simulationFinished();
         }
     }
@@ -149,6 +149,6 @@ late() {
 // Dummy callback at final generation to keep SLiM alive
 MAX_GEN late() {
     // Nothing here — this ensures SLiM keeps running until gen 11000
-    p1.outputVCFSample(50, filePath=outputPathPrefix + ".vcf")
+    p1.outputVCFSample(50, filePath=outputPathPrefix + ".vcf");
     sim.simulationFinished();
 }

@@ -15,7 +15,7 @@ set -uex
 mkdir -p neutralReps{1..100}
 for i in {1..100}
 do 
-    echo -e "slim -d s=0 -d 'out=\"./neutralRep$i/twoPopSweep\"' sim.slim"
+    echo -e "slim -d s=0 -d 'out=\"./neutralReps$i/twoPopSweep\"' sim.slim"
 done | parallel -j 20
 
 # Generate our neutral reps.
