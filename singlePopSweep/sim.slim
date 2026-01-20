@@ -134,7 +134,7 @@ late() {
 
         if (s != 0 & af >= 0.74) {
             cat("Sweep reached 75% at gen " + community.tick + "\n");
-            sim.outputVCF(outputPathPrefix + ".vcf", individuals=p1.sampleIndividuals(50));
+            p1.outputVCFSample(50, filePath=outputPathPrefix + ".vcf");
             f = prefix + "_freq.txt";
             phase = 0;
             line2 =  paste(community.tick-MUT_GEN, sim.getValue("attempt"), af, phase, sep='\t');
@@ -146,6 +146,6 @@ late() {
 // Dummy callback at final generation to keep SLiM alive
 BURN_IN + MAX_GEN late() {
     // Nothing here — this ensures SLiM keeps running until gen 11000
-    sim.outputVCF(outputPathPrefix + ".vcf", individuals=p1.sampleIndividuals(50));
+    p1.outputVCFSample(50, filePath=outputPathPrefix + ".vcf");
     sim.simulationFinished();
 }

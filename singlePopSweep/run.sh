@@ -15,7 +15,7 @@ set -uex
 mkdir -p neutralReps{1..100}
 for i in {1..100}
 do 
-    echo "slim -d s=0 -d out=\"./neutralRep${i}/singlePopSweep\" sim.slim"
+    printf "slim -d s=0 -d out=\"./neutralRep%d/singlePopSweep\" sim.slim" "$i"
 done | parallel -j 20
 
 # Run selscan.

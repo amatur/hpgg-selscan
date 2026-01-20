@@ -150,8 +150,8 @@ late() {
 
         if (s != 0 & af >= 0.74) {
             cat("Sweep reached 75% at gen " + community.tick + "\n");
-            sim.outputVCF(outputPathPrefix + "_p1.vcf", individuals=p1.sampleIndividuals(50));
-            sim.outputVCF(outputPathPrefix + "_p2.vcf", individuals=p2.sampleIndividuals(50));
+            p1.outputVCFSample(50, filePath=outputPathPrefix + "_p1.vcf");
+            p2.outputVCFSample(50, filePath=outputPathPrefix + "_p2.vcf");
             sim.simulationFinished();
 
             f = prefix + "_freq.txt";
@@ -164,7 +164,7 @@ late() {
 
 // Dummy callback at final generation to keep SLiM alive
 BURN_IN + MAX_GEN late() {
-    sim.outputVCF(outputPathPrefix + "_p1.vcf", individuals=p1.sampleIndividuals(50));
-    sim.outputVCF(outputPathPrefix + "_p2.vcf", individuals=p2.sampleIndividuals(50));
+    p1.outputVCFSample(50, filePath=outputPathPrefix + "_p1.vcf");
+    p2.outputVCFSample(50, filePath=outputPathPrefix + "_p2.vcf");
     sim.simulationFinished();
 }
