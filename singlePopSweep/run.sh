@@ -13,7 +13,7 @@ set -uex
 
 # Generate our neutral models.
 mkdir -p neutralRep{1..100}
-parallel -j 20 slim -d s=0 -d 'out="./neutralRep{}/singlePopSweep"' sim.slim ::: {1..100}
+parallel -j 20 slim -d s=0 -d 'out=\"./neutralRep{}/singlePopSweep\"' sim.slim ::: {1..100}
 
 # Run selscan.
 for i in {1..100}
