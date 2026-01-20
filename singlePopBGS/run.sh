@@ -30,7 +30,7 @@ done
 
 # Our non-neutral replicate.
 mkdir sweep
-slim -d s=0.1 -d out=\"./sweep/singlePopBGS\" sim.slim
+slim -d s=0.1 -d out='./sweep/singlePopBGS' sim.slim
 vcftools --vcf "./sweep/singlePopBGS.vcf" --min-alleles 2 --max-alleles 2 --recode --out "sweep/tmp"
 mv "sweep/tmp.recode.vcf" "sweep/p1.vcf"
 selscan --vcf "sweep/p1.vcf" --out "sweep/singlePopBGS" --ihs --nsl --pmap --trunc-ok

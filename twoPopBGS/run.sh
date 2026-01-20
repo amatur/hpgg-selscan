@@ -39,7 +39,7 @@ done
 
 # Our non-neutral replicate.
 mkdir sweep
-slim -d s=0.1 -d out=\"./sweep/twoPopBGS\" sim.slim
+slim -d s=0.1 -d out='./sweep/twoPopBGS' sim.slim
 vcftools --vcf "./sweep/twoPopBGS_p1.vcf" --min-alleles 2 --max-alleles 2 --recode --out "sweep/tmp"
 mv "sweep/tmp.recode.vcf" "sweep/p1.vcf"
 bgzip "sweep/p1.vcf"
